@@ -1,0 +1,6 @@
+ollama run llama2
+ollama run mixtral
+ollama run dolphin-mixtral
+ollama run magicoder
+ollama run deepseek-coder
+ollama run llama2-uncensored

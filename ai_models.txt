@@ -1,0 +1,10 @@
+ollama run llama2
+ollama run mixtral
+ollama run dolphin-mixtral
+ollama run magicoder
+ollama run deepseek-coder
+ollama run llama2-uncensored
+
+
+
+pip install openai-whisper && pip install --upgrade pip openai && git pull git@github.com:openai/whisper.git && brew install ffmpeg && pip install setuptools-rust && pip freeze > requirements.txt
