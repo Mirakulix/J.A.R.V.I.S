@@ -137,3 +137,9 @@ venv/
 .env
 **/.env
 .DS_Store
+.software-packages/.github_repos
+.vscode/
+.idea/
+.claude/
+.trunk/
+
