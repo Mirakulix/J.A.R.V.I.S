@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - Deutsche Konversation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            height: 100vh;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .visualization-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .spectrum-circle {
+            width: 600px;
+            height: 600px;
+            position: relative;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.05) 0%, transparent 70%);
+        }
+
+        .frequency-bar {
+            position: absolute;
+            transform-origin: bottom center;
+            width: 3px;
+            background: linear-gradient(to top, #00d4ff, #ff6b6b, #4ecdc4);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+            box-shadow: 0 0 5px currentColor;
+        }
+
+        .center-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 2px solid #00d4ff;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        .frequency-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .freq-label {
+            position: absolute;
+            font-size: 10px;
+            color: #80c0ff;
+            transform: translate(-50%, -50%);
+        }
+
+        .conversation-panel {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 1rem;
+        }
+
+        .panel-header h2 {
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: blink 1s infinite;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.user {
+            background: rgba(0, 212, 255, 0.2);
+            border-left: 3px solid #00d4ff;
+        }
+
+        .message.jarvis {
+            background: rgba(76, 205, 196, 0.2);
+            border-left: 3px solid #4ecdc4;
+        }
+
+        .message-header {
+            font-size: 0.8rem;
+            color: #80c0ff;
+            margin-bottom: 0.25rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .message-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00d4ff;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #00d4ff;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00d4ff, #4ecdc4);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ff6b6b;
+            font-size: 0.9rem;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .recording-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.95); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .back-button {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: #00d4ff;
+            text-decoration: none;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-button">← Zurück</a>
+
+    <div class="main-container">
+        <div class="visualization-container">
+            <div class="spectrum-circle" id="spectrumCircle">
+                <div class="center-indicator">J.A.R.V.I.S</div>
+                <div class="frequency-labels" id="frequencyLabels"></div>
+            </div>
+        </div>
+
+        <div class="conversation-panel">
+            <div class="panel-header">
+                <h2>Deutsche Konversation</h2>
+                <div class="status-display">
+                    <div class="status-dot"></div>
+                    <span id="statusText">Bereit für Gespräch</span>
+                </div>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="message jarvis">
+                    <div class="message-header">J.A.R.V.I.S</div>
+                    <div>Hallo! Ich bin J.A.R.V.I.S. Wie kann ich Ihnen heute helfen?</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        class="message-input" 
+                        id="messageInput" 
+                        placeholder="Schreiben Sie Ihre Nachricht auf Deutsch..."
+                        onkeypress="if(event.key==='Enter') sendMessage()"
+                    >
+                    <button class="btn" onclick="sendMessage()">Senden</button>
+                </div>
+
+                <div class="audio-controls">
+                    <button class="btn" id="recordBtn" onclick="toggleRecording()">🎤 Aufnehmen</button>
+                    <button class="btn" onclick="togglePlayback()">🔊 Wiedergabe</button>
+                </div>
+
+                <div class="recording-indicator" id="recordingIndicator">
+                    <div class="recording-dot"></div>
+                    <span>Aufnahme läuft...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let audioContext = null;
+        let analyser = null;
+        let spectrumBars = [];
+        let animationFrame = null;
+
+        // Initialize spectrum visualization
+        function initializeSpectrum() {
+            const spectrumCircle = document.getElementById('spectrumCircle');
+            const frequencyLabels = document.getElementById('frequencyLabels');
+            
+            // Create frequency bars (360 degrees)
+            for (let i = 0; i < 360; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'frequency-bar';
+                
+                const angle = (i * Math.PI) / 180;
+                const radius = 250; // Distance from center
+                
+                const x = 50 + (Math.cos(angle) * radius / 6); // Convert to percentage
+                const y = 50 + (Math.sin(angle) * radius / 6);
+                
+                bar.style.left = `${x}%`;
+                bar.style.top = `${y}%`;
+                bar.style.transform = `translate(-50%, -100%) rotate(${i}deg)`;
+                bar.style.height = '5px';
+                
+                spectrumCircle.appendChild(bar);
+                spectrumBars.push(bar);
+            }
+
+            // Add frequency labels
+            const frequencies = ['20Hz', '100Hz', '1kHz', '10kHz', '20kHz'];
+            frequencies.forEach((freq, index) => {
+                const label = document.createElement('div');
+                label.className = 'freq-label';
+                label.textContent = freq;
+                
+                const angle = (index * 72) * Math.PI / 180; // 5 labels around circle
+                const radius = 280;
+                const x = 50 + (Math.cos(angle) * radius / 6);
+                const y = 50 + (Math.sin(angle) * radius / 6);
+                
+                label.style.left = `${x}%`;
+                label.style.top = `${y}%`;
+                
+                frequencyLabels.appendChild(label);
+            });
+        }
+
+        // Simulate audio spectrum animation
+        function animateSpectrum() {
+            spectrumBars.forEach((bar, index) => {
+                const frequency = 20 + (index * 20000 / 360);
+                let amplitude = 0;
+                
+                // Simulate different frequency responses
+                if (isRecording) {
+                    amplitude = Math.random() * 100;
+                } else {
+                    // Ambient animation
+                    amplitude = Math.sin(Date.now() * 0.001 + index * 0.1) * 20 + 25;
+                }
+                
+                bar.style.height = `${Math.max(5, amplitude)}px`;
+                
+                // Color based on frequency
+                const hue = (index * 360 / 360) % 360;
+                bar.style.background = `hsl(${hue}, 70%, 60%)`;
+                bar.style.boxShadow = `0 0 ${amplitude/10}px hsl(${hue}, 70%, 60%)`;
+            });
+            
+            animationFrame = requestAnimationFrame(animateSpectrum);
+        }
+
+        // Send message to JARVIS
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessageToChat('user', 'Sie', message);
+            input.value = '';
+            
+            // Update status
+            updateStatus('Verarbeitung...');
+            
+            try {
+                const response = await fetch('http://localhost:8000/conversation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        language: 'auto',
+                        voice_enabled: true
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessageToChat('jarvis', 'J.A.R.V.I.S', data.response);
+                    updateStatus('Bereit für Gespräch');
+                    
+                    // Simulate audio response animation
+                    simulateAudioResponse();
+                } else {
+                    addMessageToChat('jarvis', 'J.A.R.V.I.S', 'Entschuldigung, ich konnte nicht antworten. Bitte versuchen Sie es erneut.');
+                    updateStatus('Fehler - Bereit für Gespräch');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessageToChat('jarvis', 'J.A.R.V.I.S', 'Verbindungsfehler. Bitte prüfen Sie die Verbindung zum J.A.R.V.I.S Core Service.');
+                updateStatus('Verbindungsfehler');
+            }
+        }
+
+        // Add message to chat
+        function addMessageToChat(type, sender, message) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${sender} - ${new Date().toLocaleTimeString('de-DE')}</div>
+                <div>${message}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Update status
+        function updateStatus(status) {
+            document.getElementById('statusText').textContent = status;
+        }
+
+        // Toggle recording
+        async function toggleRecording() {
+            const recordBtn = document.getElementById('recordBtn');
+            const recordingIndicator = document.getElementById('recordingIndicator');
+            
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        await processAudioInput(audioBlob);
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    
+                    recordBtn.textContent = '⏹️ Stoppen';
+                    recordingIndicator.classList.add('active');
+                    updateStatus('Aufnahme läuft...');
+                    
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    alert('Mikrofon-Zugriff fehlgeschlagen. Bitte prüfen Sie die Berechtigung.');
+                }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                isRecording = false;
+                recordBtn.textContent = '🎤 Aufnehmen';
+                recordingIndicator.classList.remove('active');
+                updateStatus('Verarbeite Spracheingabe...');
+            }
+        }
+
+        // Process audio input
+        async function processAudioInput(audioBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+                
+                const response = await fetch('http://localhost:8000/speech-to-text', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('messageInput').value = data.text;
+                    updateStatus('Sprache erkannt - Bereit zum Senden');
+                } else {
+                    updateStatus('Spracherkennung fehlgeschlagen');
+                }
+            } catch (error) {
+                console.error('Error processing audio:', error);
+                updateStatus('Fehler bei Sprachverarbeitung');
+            }
+        }
+
+        // Simulate audio response for visualization
+        function simulateAudioResponse() {
+            let duration = 2000; // 2 seconds
+            let startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / duration;
+                
+                if (progress < 1) {
+                    // Simulate speaking animation
+                    spectrumBars.forEach((bar, index) => {
+                        const amplitude = Math.sin(elapsed * 0.01 + index * 0.1) * 50 + 50;
+                        bar.style.height = `${amplitude}px`;
+                        
+                        const hue = (index + elapsed * 0.1) % 360;
+                        bar.style.background = `hsl(${hue}, 70%, 60%)`;
+                        bar.style.boxShadow = `0 0 ${amplitude/5}px hsl(${hue}, 70%, 60%)`;
+                    });
+                    
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+
+        // Toggle playback (placeholder)
+        function togglePlayback() {
+            // This would connect to text-to-speech endpoint
+            alert('Text-zu-Sprache Funktion - Coming soon!');
+        }
+
+        // Initialize WebSocket connection
+        function initializeWebSocket() {
+            try {
+                const ws = new WebSocket('ws://localhost:8000/ws/conversation');
+                
+                ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    updateStatus('Verbunden - Bereit für Gespräch');
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'conversation') {
+                        // Real-time conversation updates would be handled here
+                    }
+                };
+                
+                ws.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    updateStatus('Verbindung getrennt');
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+                
+            } catch (error) {
+                console.error('WebSocket initialization failed:', error);
+            }
+        }
+
+        // Initialize everything when page loads
+        window.addEventListener('load', () => {
+            initializeSpectrum();
+            animateSpectrum();
+            initializeWebSocket();
+            
+            // Set focus to input
+            document.getElementById('messageInput').focus();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+        });
+    </script>
+</body>
+</html>

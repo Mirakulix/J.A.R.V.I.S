@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - AI Assistant</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .jarvis-logo {
+            font-size: 4rem;
+            font-weight: bold;
+            text-shadow: 0 0 20px #00d4ff;
+            margin-bottom: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .status-dot {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .navigation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .nav-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .nav-card h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+            color: #00d4ff;
+        }
+
+        .nav-card p {
+            margin: 0;
+            color: #a0a0a0;
+            line-height: 1.5;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+        }
+
+        .features-list li {
+            padding: 0.25rem 0;
+            color: #80c0ff;
+        }
+
+        .features-list li:before {
+            content: "▶ ";
+            color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="jarvis-logo">J.A.R.V.I.S</div>
+        
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>System Online - Bereit für deutsche Konversation</span>
+        </div>
+
+        <div class="navigation">
+            <div class="nav-card" onclick="window.location.href='/german-conversation'">
+                <h3>🎯 Deutsche Konversation</h3>
+                <p>Sprechen Sie mit J.A.R.V.I.S auf Deutsch mit spektraler Audiovisualisierung</p>
+                <ul class="features-list">
+                    <li>Spracherkennung</li>
+                    <li>Text-zu-Sprache</li>
+                    <li>Kreisförmige Frequenzanzeige</li>
+                    <li>Echtzeit-Chat</li>
+                </ul>
+            </div>
+
+            <div class="nav-card" onclick="alert('Coming soon!')">
+                <h3>🏠 Smart Home</h3>
+                <p>Steuern Sie Ihr Zuhause mit J.A.R.V.I.S</p>
+                <ul class="features-list">
+                    <li>Lichtsteuerung</li>
+                    <li>Temperaturkontrolle</li>
+                    <li>Sicherheitssysteme</li>
+                    <li>Energiemanagement</li>
+                </ul>
+            </div>
+
+            <div class="nav-card" onclick="alert('Coming soon!')">
+                <h3>📊 Analytics</h3>
+                <p>Datenanalyse und Berichte</p>
+                <ul class="features-list">
+                    <li>System-Monitoring</li>
+                    <li>Performance-Metriken</li>
+                    <li>Vorhersagemodelle</li>
+                    <li>Trading-Dashboard</li>
+                </ul>
+            </div>
+
+            <div class="nav-card" onclick="alert('Coming soon!')">
+                <h3>🛠️ Einstellungen</h3>
+                <p>Konfiguration und Verwaltung</p>
+                <ul class="features-list">
+                    <li>Spracheinstellungen</li>
+                    <li>API-Konfiguration</li>
+                    <li>Backup & Restore</li>
+                    <li>Benutzerprofile</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verbindung zum JARVIS Core API
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('http://localhost:8000/');
+                const data = await response.json();
+                console.log('JARVIS Core Status:', data);
+            } catch (error) {
+                console.error('Error connecting to JARVIS Core:', error);
+            }
+        }
+
+        // System-Status beim Laden prüfen
+        window.addEventListener('load', checkSystemStatus);
+
+        // Futuristische Mauseffekte
+        document.addEventListener('mousemove', function(e) {
+            const cursor = document.createElement('div');
+            cursor.style.position = 'fixed';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor.style.width = '4px';
+            cursor.style.height = '4px';
+            cursor.style.background = '#00d4ff';
+            cursor.style.borderRadius = '50%';
+            cursor.style.pointerEvents = 'none';
+            cursor.style.zIndex = '9999';
+            cursor.style.opacity = '0.7';
+            document.body.appendChild(cursor);
+
+            setTimeout(() => {
+                cursor.remove();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

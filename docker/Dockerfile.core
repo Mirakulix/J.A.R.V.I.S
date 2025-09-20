@@ -3,12 +3,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including audio libraries
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
     git \
+    portaudio19-dev \
+    python3-dev \
+    libasound2-dev \
+    libsndfile1-dev \
+    espeak \
+    espeak-data \
+    libespeak-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

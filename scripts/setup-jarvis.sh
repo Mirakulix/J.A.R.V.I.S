@@ -96,12 +96,12 @@ if [ ! -s secrets/medical_encryption_key.txt ]; then
     openssl rand -base64 64 > secrets/medical_encryption_key.txt
 fi
 
-# Create Docker networks
-print_status "Creating Docker networks..."
-docker network create jarvis-frontend 2>/dev/null || true
-docker network create jarvis-internal 2>/dev/null || true
-docker network create jarvis-database 2>/dev/null || true
-docker network create jarvis-monitoring 2>/dev/null || true
+# Create Docker networks - Let Docker Compose handle this
+# print_status "Creating Docker networks..."
+# docker network create jarvis-frontend 2>/dev/null || true
+# docker network create jarvis-internal 2>/dev/null || true
+# docker network create jarvis-database 2>/dev/null || true
+# docker network create jarvis-monitoring 2>/dev/null || true
 
 # Build all Docker images
 print_status "Building Docker images..."
