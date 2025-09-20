@@ -407,8 +407,43 @@ TODO: Apps, wie Testerheld, stellen kleine leicht zu lösende Aufgaben in einer 
 
 
 
+
+
+
+
+flo@DEV:~/development/J.A.R.V.I.S$ make dev
+
+██╗  ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
+██║  ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
+███████║███████║██████╔╝██║   ██║██║███████╗
+██╔══██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
+██║  ██║██║  ██║██║  ██║ ╚████╔╝ ██║███████║
+╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
+ 
+🤖 JARVIS Multi-Container Development Environment 
+Using Docker Compose: docker compose 
+Using Python: /usr/bin/python3 
+Platform: --platform linux/arm64 
+
+📁 Setting up directories and permissions... 
+✅ Directory setup completed 
+🔨 Building Docker containers... 
+unknown flag: --platform
+make: *** [Makefile:71: build] Fehler 1
+flo@DEV:~/development/J.A.R.V.I.S$ 
+ *  History restored 
+
+flo@DEV:/media/psf/development/J.A.R.V.I.S$ 
+
+
+
 # TODO: J.A.R.V.I.S anzeigen, nicht HARVIS
 beim starten desmit make dev wird leider "HARVIS" statt "J.A.R.V.I.S" im terminal angezeigt.
+
+
+
+
+
 
 
 git clone git@github.com:Mirakulix/anthropic-cookbook.git
