@@ -142,4 +142,6 @@ venv/
 .idea/
 .claude/
 .trunk/
+database/
+
 

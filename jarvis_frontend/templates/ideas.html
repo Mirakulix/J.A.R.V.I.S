@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - Ideen Lab</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            text-shadow: 0 0 10px #00d4ff;
+        }
+
+        .back-button {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .submission-panel, .ideas-panel {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            margin: 0 0 1.5rem 0;
+            text-align: center;
+            text-shadow: 0 0 5px #00d4ff;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #00d4ff;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00d4ff;
+            border-radius: 5px;
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #666;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(45deg, #00d4ff, #0088cc);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .status-error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        .status-processing {
+            background: rgba(255, 255, 0, 0.2);
+            border: 1px solid #ffff00;
+            color: #ffff00;
+        }
+
+        .ideas-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .idea-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .idea-card:hover {
+            border-color: #00d4ff;
+            transform: translateX(5px);
+        }
+
+        .idea-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #00d4ff;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .idea-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .idea-category {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .idea-complexity {
+            color: #ffff00;
+        }
+
+        .idea-bullet-points {
+            margin: 0.5rem 0;
+            padding-left: 1rem;
+        }
+
+        .idea-bullet-points li {
+            margin: 0.2rem 0;
+            color: #a0a0a0;
+        }
+
+        .idea-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .idea-action-btn {
+            padding: 0.3rem 0.8rem;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .idea-action-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+        }
+
+        @keyframes processing {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #444;
+            border-top: 2px solid #00d4ff;
+            border-radius: 50%;
+            animation: processing 1s linear infinite;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💡 J.A.R.V.I.S Ideen Lab</h1>
+        <a href="/" class="back-button">← Zurück zum Dashboard</a>
+    </div>
+
+    <div class="container">
+        <!-- Submission Panel -->
+        <div class="submission-panel">
+            <h2 class="panel-title">Neue Idee einreichen</h2>
+            
+            <form id="ideaForm">
+                <div class="form-group">
+                    <label for="ideaPrompt">Ihre Idee beschreiben:</label>
+                    <textarea 
+                        id="ideaPrompt" 
+                        name="ideaPrompt" 
+                        placeholder="Beschreiben Sie Ihre Idee für eine neue JARVIS-Fähigkeit oder Feature. Je detaillierter, desto besser kann die KI ein Konzept entwickeln..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="submittedBy">Ihr Name (optional):</label>
+                    <input 
+                        type="text" 
+                        id="submittedBy" 
+                        name="submittedBy" 
+                        placeholder="Ihr Name oder Benutzername"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="userContext">Zusätzlicher Kontext (optional):</label>
+                    <textarea 
+                        id="userContext" 
+                        name="userContext" 
+                        placeholder="Zusätzliche Informationen über Ihren Anwendungsfall oder spezielle Anforderungen..."
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="submit-button" id="submitButton">
+                    <span id="submitText">Idee mit KI verarbeiten</span>
+                    <span id="submitSpinner" class="processing-spinner" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div id="statusMessage" style="display: none;"></div>
+        </div>
+
+        <!-- Ideas Panel -->
+        <div class="ideas-panel">
+            <h2 class="panel-title">Eingereichte Ideen</h2>
+            
+            <div class="stats-bar" id="statsBar">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalIdeas">-</div>
+                    <div class="stat-label">Gesamt</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="processedIdeas">-</div>
+                    <div class="stat-label">Verarbeitet</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="avgComplexity">-</div>
+                    <div class="stat-label">Ø Komplexität</div>
+                </div>
+            </div>
+
+            <div class="ideas-list" id="ideasList">
+                <div style="text-align: center; padding: 2rem; color: #666;">
+                    Lade Ideen...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Form submission
+        document.getElementById('ideaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = document.getElementById('submitButton');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Show processing state
+            submitButton.disabled = true;
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'inline-block';
+            
+            const formData = {
+                idea_prompt: document.getElementById('ideaPrompt').value,
+                submitted_by: document.getElementById('submittedBy').value || null,
+                user_context: document.getElementById('userContext').value || null
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/ideas/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatusMessage(result.message, 'success');
+                    document.getElementById('ideaForm').reset();
+                    loadIdeas(); // Refresh ideas list
+                    loadStats(); // Refresh stats
+                } else {
+                    showStatusMessage(result.detail || 'Fehler beim Einreichen der Idee', 'error');
+                }
+                
+            } catch (error) {
+                showStatusMessage('Netzwerkfehler: ' + error.message, 'error');
+            } finally {
+                // Restore button state
+                submitButton.disabled = false;
+                submitText.style.display = 'inline-block';
+                submitSpinner.style.display = 'none';
+            }
+        });
+
+        function showStatusMessage(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        async function loadIdeas() {
+            try {
+                const response = await fetch(`${API_BASE}/ideas?limit=20`);
+                const data = await response.json();
+                
+                const ideasList = document.getElementById('ideasList');
+                
+                if (data.ideas && data.ideas.length > 0) {
+                    ideasList.innerHTML = data.ideas.map(idea => createIdeaCard(idea)).join('');
+                } else {
+                    ideasList.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #666;">
+                            Noch keine Ideen eingereicht.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading ideas:', error);
+                document.getElementById('ideasList').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #ff0000;">
+                        Fehler beim Laden der Ideen
+                    </div>
+                `;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/ideas/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('totalIdeas').textContent = stats.total_ideas || 0;
+                document.getElementById('processedIdeas').textContent = stats.by_status?.processed || 0;
+                document.getElementById('avgComplexity').textContent = stats.average_complexity || '-';
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function createIdeaCard(idea) {
+            const complexityLabels = {
+                1: 'Einfach',
+                2: 'Mittel', 
+                3: 'Komplex',
+                4: 'Sehr komplex',
+                5: 'Episch'
+            };
+
+            const bulletPoints = [
+                idea.description_bullet_1,
+                idea.description_bullet_2,
+                idea.description_bullet_3
+            ].filter(point => point).map(point => `<li>${point}</li>`).join('');
+
+            return `
+                <div class="idea-card">
+                    <div class="idea-title">${idea.generated_title || idea.original_prompt.substring(0, 60) + '...'}</div>
+                    <div class="idea-meta">
+                        <span class="idea-category">${idea.category || 'Unbekannt'}</span>
+                        <span class="idea-complexity">Komplexität: ${complexityLabels[idea.complexity] || 'Unbekannt'}</span>
+                    </div>
+                    ${bulletPoints ? `<ul class="idea-bullet-points">${bulletPoints}</ul>` : ''}
+                    <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
+                        ${idea.submitted_by ? `Von: ${idea.submitted_by} • ` : ''}
+                        ${new Date(idea.submission_date).toLocaleDateString('de-DE')}
+                    </div>
+                    <div class="idea-actions">
+                        <button class="idea-action-btn" onclick="viewIdeaDetails(${idea.id})">Details</button>
+                        ${idea.optimized_claude_prompt ? '<button class="idea-action-btn" onclick="viewClaudePrompt(' + idea.id + ')">Claude Prompt</button>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function viewIdeaDetails(ideaId) {
+            try {
+                const response = await fetch(`${API_BASE}/ideas/${ideaId}`);
+                const idea = await response.json();
+                
+                alert(`Konzept:\n\n${idea.detailed_concept || 'Kein detailliertes Konzept verfügbar.'}`);
+            } catch (error) {
+                alert('Fehler beim Laden der Ideendetails');
+            }
+        }
+
+        async function viewClaudePrompt(ideaId) {
+            try {
+                const response = await fetch(`${API_BASE}/ideas/${ideaId}`);
+                const idea = await response.json();
+                
+                const prompt = idea.optimized_claude_prompt || 'Kein optimierter Prompt verfügbar.';
+                
+                // Copy to clipboard and show modal
+                navigator.clipboard.writeText(prompt).then(() => {
+                    alert('Claude Code Prompt (wurde in die Zwischenablage kopiert):\n\n' + prompt);
+                }).catch(() => {
+                    alert('Claude Code Prompt:\n\n' + prompt);
+                });
+            } catch (error) {
+                alert('Fehler beim Laden des Claude Prompts');
+            }
+        }
+
+        // Load data on page load
+        window.addEventListener('load', function() {
+            loadIdeas();
+            loadStats();
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadIdeas();
+            loadStats();
+        }, 30000);
+    </script>
+</body>
+</html>

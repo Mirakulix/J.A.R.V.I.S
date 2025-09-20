@@ -22,3 +22,7 @@ pyaudio==0.2.14
 langdetect==1.0.9
 numpy==1.24.3
 wave==0.0.2
+
+# Azure AI and Database Integration
+asyncpg==0.29.0
+aiohttp==3.9.1

@@ -116,8 +116,9 @@ print_status "Waiting for databases to be ready..."
 sleep 30
 
 # Run database migrations
-print_status "Running database migrations..."
-$DOCKER_COMPOSE exec jarvis-core python -m alembic upgrade head
+print_status "Database migrations skipped - Using direct database initialization..."
+# Note: Database users and schemas are created via Docker init scripts
+echo "  ℹ️  Database schemas are initialized through Docker entrypoint scripts"
 
 # Health check
 print_status "Performing health checks..."

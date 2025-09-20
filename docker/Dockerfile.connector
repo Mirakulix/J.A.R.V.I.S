@@ -20,15 +20,15 @@ COPY jarvis_connector/ ./jarvis_connector/
 COPY shared/ ./shared/
 COPY skills/ ./skills/
 
-# Copy cron jobs for scheduled sync
-COPY docker/crontab /etc/cron.d/jarvis-sync
-RUN chmod 0644 /etc/cron.d/jarvis-sync && \
-    crontab /etc/cron.d/jarvis-sync
-
-# Create non-root user
+# Create non-root user first
 RUN useradd -m -u 1000 jarvis && \
     chown -R jarvis:jarvis /app
-USER jarvis
+
+# Copy cron jobs for scheduled sync (after user creation)
+COPY docker/crontab /etc/cron.d/jarvis-sync
+RUN chmod 0644 /etc/cron.d/jarvis-sync && \
+    mkdir -p /var/run && \
+    chmod 755 /var/run
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -41,5 +41,5 @@ ENV PYTHONPATH=/app
 ENV SYNC_INTERVAL=300
 ENV MAX_RETRY_ATTEMPTS=3
 
-# Start cron and main application
-CMD ["sh", "-c", "cron && python -m jarvis_connector.main"]
+# Start cron and main application (as root to run cron, then exec to user)
+CMD ["sh", "-c", "service cron start && su jarvis -c 'python -m jarvis_connector.app'"]

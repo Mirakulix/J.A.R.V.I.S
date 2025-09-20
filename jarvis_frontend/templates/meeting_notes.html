@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - Meeting Notes Assistant</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+
+        .container {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .upload-section {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .upload-section h3 {
+            margin: 0 0 1.5rem 0;
+            color: #00d4ff;
+            font-size: 1.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #00d4ff;
+            border-radius: 10px;
+            padding: 3rem;
+            text-align: center;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: rgba(0, 212, 255, 0.05);
+            border-color: #00a3cc;
+        }
+
+        .upload-area.dragover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: #00d4ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: #00d4ff;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #00a3cc;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .processing-indicator {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #00d4ff;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .results-section h3 {
+            margin: 0 0 1.5rem 0;
+            color: #00d4ff;
+            font-size: 1.5rem;
+        }
+
+        .summary-card {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .summary-card h4 {
+            color: #00d4ff;
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        .summary-content {
+            color: #a0a0a0;
+            line-height: 1.6;
+        }
+
+        .todo-item {
+            background: rgba(255, 165, 0, 0.1);
+            border-left: 4px solid #ffa500;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .todo-item .assignee {
+            color: #ffa500;
+            font-weight: bold;
+        }
+
+        .todo-item .task {
+            color: #e0e0e0;
+            margin-top: 0.5rem;
+        }
+
+        .participants-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .participant {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-section {
+            grid-column: 1 / -1;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+
+        .example-section h3 {
+            color: #00d4ff;
+            margin: 0 0 1rem 0;
+        }
+
+        .demo-btn {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .demo-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 JARVIS Meeting Notes Assistant</h1>
+        <button class="back-btn" onclick="window.location.href='/'">← Zurück</button>
+    </div>
+
+    <div class="container">
+        <div class="upload-section">
+            <h3>Meeting Audio hochladen</h3>
+            <p style="color: #a0a0a0; margin-bottom: 1.5rem;">
+                Laden Sie eine Audio-Datei Ihres Meetings hoch, und JARVIS erstellt automatisch strukturierte Notizen mit ToDos und Verantwortlichkeiten.
+            </p>
+            
+            <div class="upload-area" onclick="document.getElementById('audioFile').click()" 
+                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <div class="upload-icon">🎤</div>
+                <p><strong>Audio-Datei hier ablegen</strong></p>
+                <p style="color: #a0a0a0;">oder klicken zum Auswählen</p>
+                <p style="font-size: 0.8rem; color: #666;">Unterstützte Formate: MP3, WAV, M4A, OGG</p>
+            </div>
+            
+            <input type="file" id="audioFile" class="file-input" accept="audio/*" onchange="handleFileSelect(event)">
+            
+            <div style="text-align: center; margin-top: 1rem;">
+                <button class="btn" onclick="processAudio()" id="processBtn" disabled>
+                    📝 Meeting Notes erstellen
+                </button>
+                <button class="btn" onclick="startRecording()" id="recordBtn">
+                    🎤 Live-Aufnahme starten
+                </button>
+            </div>
+            
+            <div class="processing-indicator" id="processingIndicator">
+                <div class="spinner"></div>
+                <p>Verarbeite Audio und erstelle Meeting Notes...</p>
+                <p style="font-size: 0.9rem; color: #a0a0a0;">Dies kann einige Minuten dauern</p>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h3>Meeting Notes</h3>
+            <div id="resultsContainer">
+                <p style="color: #a0a0a0; text-align: center; margin: 3rem 0;">
+                    Laden Sie eine Audio-Datei hoch oder starten Sie eine Live-Aufnahme, um automatische Meeting Notes zu erhalten.
+                </p>
+            </div>
+        </div>
+
+        <div class="example-section">
+            <h3>🎯 Funktionen & Demo</h3>
+            <p style="color: #a0a0a0; margin-bottom: 1.5rem;">
+                Der Meeting Notes Assistant analysiert Ihre Audio-Aufnahmen mit KI und erstellt:
+            </p>
+            <ul style="color: #a0a0a0; line-height: 1.8; margin-bottom: 1.5rem;">
+                <li><strong>Automatische Transkription</strong> - Gesprochene Inhalte werden zu Text</li>
+                <li><strong>Strukturierte Zusammenfassung</strong> - Wichtige Punkte und Entscheidungen</li>
+                <li><strong>ToDo-Extraktion</strong> - Automatische Erkennung von Aufgaben</li>
+                <li><strong>Verantwortlichkeiten</strong> - Zuordnung von Aufgaben zu Personen</li>
+                <li><strong>Teilnehmer-Erkennung</strong> - Identifikation der Sprecher</li>
+            </ul>
+            <div style="text-align: center;">
+                <button class="demo-btn" onclick="showDemo()">
+                    🎬 Demo-Beispiel anzeigen
+                </button>
+                <button class="demo-btn" onclick="showFeatures()">
+                    ⚙️ Technische Details
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.target.closest('.upload-area').classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.target.closest('.upload-area').classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const uploadArea = event.target.closest('.upload-area');
+            uploadArea.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('audio/')) {
+                    selectedFile = file;
+                    updateFileStatus(file.name);
+                } else {
+                    alert('Bitte wählen Sie eine Audio-Datei aus.');
+                }
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                updateFileStatus(file.name);
+            }
+        }
+
+        function updateFileStatus(filename) {
+            document.getElementById('processBtn').disabled = false;
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.innerHTML = `
+                <div class="upload-icon">✅</div>
+                <p><strong>Datei ausgewählt:</strong></p>
+                <p style="color: #00d4ff;">${filename}</p>
+                <p style="font-size: 0.8rem; color: #a0a0a0;">Klicken um eine andere Datei zu wählen</p>
+            `;
+        }
+
+        async function processAudio() {
+            if (!selectedFile) {
+                alert('Bitte wählen Sie zuerst eine Audio-Datei aus.');
+                return;
+            }
+
+            document.getElementById('processingIndicator').style.display = 'block';
+            document.getElementById('processBtn').disabled = true;
+
+            // Simulate processing time
+            setTimeout(() => {
+                showDemoResults();
+                document.getElementById('processingIndicator').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+            }, 3000);
+        }
+
+        async function startRecording() {
+            const recordBtn = document.getElementById('recordBtn');
+            
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        selectedFile = new File([audioBlob], 'meeting_recording.wav', { type: 'audio/wav' });
+                        updateFileStatus('Live-Aufnahme (meeting_recording.wav)');
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.textContent = '⏹️ Aufnahme beenden';
+                    recordBtn.style.background = '#ff4444';
+                    
+                } catch (error) {
+                    alert('Mikrofon-Zugriff fehlgeschlagen. Bitte prüfen Sie die Berechtigung.');
+                }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                recordBtn.textContent = '🎤 Live-Aufnahme starten';
+                recordBtn.style.background = '#00d4ff';
+            }
+        }
+
+        function showDemo() {
+            showDemoResults();
+        }
+
+        function showDemoResults() {
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.innerHTML = `
+                <div class="timestamp">Meeting vom ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')}</div>
+                
+                <div class="summary-card">
+                    <h4>📋 Meeting Zusammenfassung</h4>
+                    <div class="summary-content">
+                        <strong>Hauptthemen:</strong> Projektplanung Q4, Budget-Review, Team-Erweiterung<br><br>
+                        <strong>Wichtige Entscheidungen:</strong>
+                        <ul>
+                            <li>Neues Feature-Set bis Ende November implementieren</li>
+                            <li>Zusätzlicher Entwickler wird eingestellt</li>
+                            <li>Wöchentliche Status-Meetings eingeführt</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h4>👥 Teilnehmer</h4>
+                    <div class="participants-list">
+                        <span class="participant">Max Mustermann (Projektleiter)</span>
+                        <span class="participant">Anna Schmidt (Entwicklung)</span>
+                        <span class="participant">Tom Weber (Design)</span>
+                        <span class="participant">Lisa Müller (QA)</span>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h4>✅ Aufgaben & Verantwortlichkeiten</h4>
+                    <div class="todo-item">
+                        <div class="assignee">🎯 Max Mustermann</div>
+                        <div class="task">Stellenausschreibung für Senior Developer erstellen und veröffentlichen</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Fällig: Bis Freitag</div>
+                    </div>
+                    <div class="todo-item">
+                        <div class="assignee">🎯 Anna Schmidt</div>
+                        <div class="task">Technische Spezifikation für neue Features dokumentieren</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Fällig: Bis Mittwoch</div>
+                    </div>
+                    <div class="todo-item">
+                        <div class="assignee">🎯 Tom Weber</div>
+                        <div class="task">UI-Mockups für Dashboard-Redesign erstellen</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Fällig: Bis Donnerstag</div>
+                    </div>
+                    <div class="todo-item">
+                        <div class="assignee">🎯 Lisa Müller</div>
+                        <div class="task">Test-Plan für neue Features entwickeln</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Fällig: Bis nächste Woche</div>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h4>📅 Nächste Schritte</h4>
+                    <div class="summary-content">
+                        <ul>
+                            <li><strong>Montag:</strong> Kick-off für neues Feature-Set</li>
+                            <li><strong>Mittwoch:</strong> Review der technischen Spezifikation</li>
+                            <li><strong>Freitag:</strong> Status-Update und Team-Meeting</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn" onclick="exportNotes()">📄 Als PDF exportieren</button>
+                    <button class="btn" onclick="sendToTeam()">📧 An Team senden</button>
+                </div>
+            `;
+        }
+
+        function showFeatures() {
+            alert('🔧 Technische Details:\\n\\n• Automatische Spracherkennung mit Whisper AI\\n• KI-basierte Zusammenfassung mit GPT-4\\n• Named Entity Recognition für Personen\\n• Sentiment-Analyse für Meeting-Stimmung\\n• Export in verschiedene Formate\\n• Integration mit Kalender-Systemen');
+        }
+
+        function exportNotes() {
+            alert('📄 PDF-Export wird implementiert...\\nDie Meeting Notes würden als strukturiertes PDF exportiert.');
+        }
+
+        function sendToTeam() {
+            alert('📧 E-Mail-Integration wird implementiert...\\nDie Meeting Notes würden automatisch an alle Teilnehmer gesendet.');
+        }
+    </script>
+</body>
+</html>

@@ -19,9 +19,9 @@ mkdir -p /opt/chroma/backups
 mkdir -p /opt/embeddings
 mkdir -p /opt/init
 
-# Set ownership
-chown -R chroma:chroma /opt/chroma
-chown -R chroma:chroma /opt/embeddings
+# Set ownership (ignore errors for mounted files)
+chown -R chroma:chroma /opt/chroma 2>/dev/null || echo "Warning: Could not change ownership of /opt/chroma"
+chown -R chroma:chroma /opt/embeddings 2>/dev/null || echo "Warning: Could not change ownership of /opt/embeddings"
 
 # Initialize collections if first run
 if [ ! -f "/opt/chroma/data/.initialized" ]; then

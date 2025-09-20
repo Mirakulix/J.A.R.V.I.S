@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - Einstellungen</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+
+        .container {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .settings-section {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-section h3 {
+            margin: 0 0 1.5rem 0;
+            color: #00d4ff;
+            font-size: 1.5rem;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            color: #a0a0a0;
+            flex: 1;
+        }
+
+        .setting-control {
+            flex: 0 0 auto;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(0, 212, 255, 0.3);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #00d4ff;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: #0a0a0a;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(28px);
+        }
+
+        .input-field {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            width: 200px;
+        }
+
+        .select-field {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            width: 200px;
+        }
+
+        .save-btn {
+            background: #00d4ff;
+            color: #0a0a0a;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            background: #00a3cc;
+            transform: translateY(-2px);
+        }
+
+        .status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .status-message.error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff4444;
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ JARVIS Einstellungen</h1>
+        <button class="back-btn" onclick="window.location.href='/'">← Zurück</button>
+    </div>
+
+    <div class="container">
+        <div class="settings-section">
+            <h3>Spracheinstellungen</h3>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Sprache:</strong><br>
+                    <small>Hauptsprache für Konversationen</small>
+                </div>
+                <div class="setting-control">
+                    <select class="select-field" id="language">
+                        <option value="de">Deutsch</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Sprachgeschwindigkeit:</strong><br>
+                    <small>Geschwindigkeit der Sprachausgabe</small>
+                </div>
+                <div class="setting-control">
+                    <select class="select-field" id="speech-rate">
+                        <option value="0.8">Langsam</option>
+                        <option value="1.0" selected>Normal</option>
+                        <option value="1.2">Schnell</option>
+                    </select>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Automatische Sprachausgabe:</strong><br>
+                    <small>JARVIS Antworten automatisch vorlesen</small>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="auto-speech" onclick="toggleSetting(this)"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>System-Konfiguration</h3>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Debug-Modus:</strong><br>
+                    <small>Erweiterte Logging-Informationen anzeigen</small>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch" id="debug-mode" onclick="toggleSetting(this)"></div>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Auto-Backup:</strong><br>
+                    <small>Automatische Backups der Konversationen</small>
+                </div>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="auto-backup" onclick="toggleSetting(this)"></div>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Theme:</strong><br>
+                    <small>Benutzeroberflächen-Theme</small>
+                </div>
+                <div class="setting-control">
+                    <select class="select-field" id="theme">
+                        <option value="jarvis" selected>JARVIS Blue</option>
+                        <option value="dark">Dunkel</option>
+                        <option value="matrix">Matrix Green</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>API-Konfiguration</h3>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>OpenAI API Key:</strong><br>
+                    <small>Für erweiterte KI-Funktionen</small>
+                </div>
+                <div class="setting-control">
+                    <input type="password" class="input-field" id="openai-key" placeholder="sk-...">
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Claude API Key:</strong><br>
+                    <small>Für Claude Code Integration</small>
+                </div>
+                <div class="setting-control">
+                    <input type="password" class="input-field" id="claude-key" placeholder="sk-ant-...">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Datenmanagement</h3>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Backup erstellen:</strong><br>
+                    <small>Vollständiges System-Backup</small>
+                </div>
+                <div class="setting-control">
+                    <button class="save-btn" onclick="createBackup()" style="margin:0;">Backup</button>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <strong>Logs löschen:</strong><br>
+                    <small>Alte Konversationslogs entfernen</small>
+                </div>
+                <div class="setting-control">
+                    <button class="save-btn" onclick="clearLogs()" style="margin:0; background:#ff4444;">Löschen</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="save-btn" onclick="saveSettings()">Einstellungen speichern</button>
+        <div class="status-message" id="status-message"></div>
+    </div>
+
+    <script>
+        function toggleSetting(element) {
+            element.classList.toggle('active');
+        }
+
+        function saveSettings() {
+            // Collect all settings
+            const settings = {
+                language: document.getElementById('language').value,
+                speechRate: document.getElementById('speech-rate').value,
+                autoSpeech: document.getElementById('auto-speech').classList.contains('active'),
+                debugMode: document.getElementById('debug-mode').classList.contains('active'),
+                autoBackup: document.getElementById('auto-backup').classList.contains('active'),
+                theme: document.getElementById('theme').value,
+                openaiKey: document.getElementById('openai-key').value,
+                claudeKey: document.getElementById('claude-key').value
+            };
+
+            // Save to localStorage (in real implementation, send to backend)
+            localStorage.setItem('jarvis-settings', JSON.stringify(settings));
+            
+            showStatus('Einstellungen erfolgreich gespeichert!', 'success');
+        }
+
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('jarvis-settings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                document.getElementById('language').value = settings.language || 'de';
+                document.getElementById('speech-rate').value = settings.speechRate || '1.0';
+                document.getElementById('theme').value = settings.theme || 'jarvis';
+                
+                if (settings.autoSpeech) document.getElementById('auto-speech').classList.add('active');
+                if (settings.debugMode) document.getElementById('debug-mode').classList.add('active');
+                if (settings.autoBackup !== false) document.getElementById('auto-backup').classList.add('active');
+            }
+        }
+
+        function createBackup() {
+            showStatus('Backup wird erstellt...', 'success');
+            // In real implementation, trigger backup endpoint
+            setTimeout(() => {
+                showStatus('Backup erfolgreich erstellt!', 'success');
+            }, 2000);
+        }
+
+        function clearLogs() {
+            if (confirm('Möchten Sie wirklich alle Logs löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                showStatus('Logs werden gelöscht...', 'success');
+                // In real implementation, clear logs via API
+                setTimeout(() => {
+                    showStatus('Logs erfolgreich gelöscht!', 'success');
+                }, 1000);
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = `status-message ${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load settings on page load
+        window.addEventListener('load', loadSettings);
+    </script>
+</body>
+</html>

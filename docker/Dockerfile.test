@@ -58,4 +58,4 @@ ENV COVERAGE_THRESHOLD=80
 ENV SECURITY_SCAN_ENABLED=true
 ENV PERFORMANCE_TEST_ENABLED=true
 
-CMD ["python", "-m", "jarvis_test.main"]
+CMD ["python", "-m", "jarvis_test.app"]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """JARVIS Core Service with German Conversation Capabilities"""
-from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,6 +13,19 @@ from typing import Dict, List, Optional, Any
 import logging
 from datetime import datetime
 import uuid
+import os
+import sys
+
+# Add shared module to path
+sys.path.append('/app/shared')
+from azure_ai_service import AzureAIService, process_idea_with_azure_ai, validate_azure_ai_config
+
+# Database connection imports
+try:
+    import asyncpg
+    import psycopg2
+except ImportError:
+    logging.warning("PostgreSQL libraries not available")
 
 # German language processing imports
 try:
@@ -60,9 +73,134 @@ class TTSRequest(BaseModel):
     language: str = "de"
     voice: str = "default"
 
+class IdeaSubmissionRequest(BaseModel):
+    idea_prompt: str
+    submitted_by: Optional[str] = None
+    user_context: Optional[str] = None
+
+class IdeaResponse(BaseModel):
+    id: int
+    status: str
+    message: str
+    generated_content: Optional[Dict] = None
+
 # In-memory storage for conversations
 conversations: Dict[str, List[Dict]] = {}
 connected_clients: List[WebSocket] = []
+
+# Database connection
+class DatabaseManager:
+    def __init__(self):
+        self.org_db_url = os.getenv('POSTGRES_ORG_URL')
+        
+    async def get_org_connection(self):
+        """Get connection to organization database"""
+        if not self.org_db_url:
+            raise HTTPException(status_code=500, detail="Database connection not configured")
+        return await asyncpg.connect(self.org_db_url)
+    
+    async def insert_idea(self, idea_data: Dict) -> int:
+        """Insert new idea into database"""
+        conn = await self.get_org_connection()
+        try:
+            query = """
+                INSERT INTO ideas (
+                    original_prompt, submitted_by, generated_title,
+                    description_bullet_1, description_bullet_2, description_bullet_3,
+                    detailed_concept, optimized_claude_prompt, category,
+                    complexity, tags, requirements_notes, azure_processing_status
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING id
+            """
+            
+            result = await conn.fetchval(
+                query,
+                idea_data['original_prompt'],
+                idea_data.get('submitted_by'),
+                idea_data.get('generated_title'),
+                idea_data.get('bullet_points', [None, None, None])[0],
+                idea_data.get('bullet_points', [None, None, None])[1],
+                idea_data.get('bullet_points', [None, None, None])[2],
+                idea_data.get('detailed_concept'),
+                idea_data.get('optimized_prompt'),
+                idea_data.get('category'),
+                idea_data.get('complexity'),
+                idea_data.get('tags', []),
+                idea_data.get('requirements_notes'),
+                idea_data.get('azure_processing_status', 'completed')
+            )
+            return result
+        finally:
+            await conn.close()
+    
+    async def update_idea_status(self, idea_id: int, status: str, processing_data: Optional[Dict] = None):
+        """Update idea processing status"""
+        conn = await self.get_org_connection()
+        try:
+            if processing_data:
+                query = """
+                    UPDATE ideas SET 
+                        status = $2,
+                        generated_title = $3,
+                        description_bullet_1 = $4,
+                        description_bullet_2 = $5,
+                        description_bullet_3 = $6,
+                        detailed_concept = $7,
+                        optimized_claude_prompt = $8,
+                        category = $9,
+                        complexity = $10,
+                        tags = $11,
+                        requirements_notes = $12,
+                        azure_processing_status = $13,
+                        processed_date = CURRENT_TIMESTAMP,
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE id = $1
+                """
+                await conn.execute(
+                    query, idea_id, status,
+                    processing_data.get('title'),
+                    processing_data.get('bullet_points', [None, None, None])[0],
+                    processing_data.get('bullet_points', [None, None, None])[1],
+                    processing_data.get('bullet_points', [None, None, None])[2],
+                    processing_data.get('detailed_concept'),
+                    processing_data.get('optimized_prompt'),
+                    processing_data.get('category'),
+                    processing_data.get('complexity'),
+                    processing_data.get('tags', []),
+                    processing_data.get('requirements_notes'),
+                    'completed'
+                )
+            else:
+                query = "UPDATE ideas SET status = $2, last_updated = CURRENT_TIMESTAMP WHERE id = $1"
+                await conn.execute(query, idea_id, status)
+        finally:
+            await conn.close()
+
+    async def get_ideas(self, limit: int = 50, status_filter: Optional[str] = None) -> List[Dict]:
+        """Retrieve ideas from database"""
+        conn = await self.get_org_connection()
+        try:
+            if status_filter:
+                query = """
+                    SELECT * FROM ideas 
+                    WHERE status = $1 
+                    ORDER BY submission_date DESC 
+                    LIMIT $2
+                """
+                rows = await conn.fetch(query, status_filter, limit)
+            else:
+                query = """
+                    SELECT * FROM ideas 
+                    ORDER BY submission_date DESC 
+                    LIMIT $1
+                """
+                rows = await conn.fetch(query, limit)
+            
+            return [dict(row) for row in rows]
+        finally:
+            await conn.close()
+
+db_manager = DatabaseManager()
 
 # German responses for JARVIS
 JARVIS_RESPONSES_DE = {
@@ -354,6 +492,178 @@ async def analyze_audio_spectrum(audio: UploadFile = File(...)):
         logger.error(f"Audio analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/ideas/submit")
+async def submit_idea(request: IdeaSubmissionRequest) -> IdeaResponse:
+    """Submit a new idea for AI processing and enhancement"""
+    try:
+        logger.info(f"Received new idea submission: {request.idea_prompt[:100]}...")
+        
+        # First, store the basic idea in database
+        basic_idea_data = {
+            'original_prompt': request.idea_prompt,
+            'submitted_by': request.submitted_by,
+            'azure_processing_status': 'processing'
+        }
+        
+        idea_id = await db_manager.insert_idea(basic_idea_data)
+        logger.info(f"Created idea record with ID: {idea_id}")
+        
+        try:
+            # Process with Azure AI
+            if validate_azure_ai_config():
+                logger.info("Processing idea with Azure AI...")
+                enhancement = await process_idea_with_azure_ai(
+                    request.idea_prompt, 
+                    request.user_context
+                )
+                
+                # Prepare enhanced data for database
+                enhanced_data = {
+                    'title': enhancement.title,
+                    'bullet_points': enhancement.bullet_points,
+                    'detailed_concept': enhancement.detailed_concept,
+                    'optimized_prompt': enhancement.optimized_prompt,
+                    'category': enhancement.category,
+                    'complexity': enhancement.complexity,
+                    'tags': enhancement.tags,
+                    'requirements_notes': enhancement.requirements_notes
+                }
+                
+                # Update database with enhanced content
+                await db_manager.update_idea_status(idea_id, 'processed', enhanced_data)
+                
+                # Broadcast to connected clients
+                idea_message = {
+                    "type": "new_idea",
+                    "idea_id": idea_id,
+                    "title": enhancement.title,
+                    "category": enhancement.category,
+                    "complexity": enhancement.complexity,
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                for client in connected_clients[:]:
+                    try:
+                        await client.send_text(json.dumps(idea_message))
+                    except:
+                        connected_clients.remove(client)
+                
+                return IdeaResponse(
+                    id=idea_id,
+                    status="processed",
+                    message="Idea successfully processed and enhanced with AI",
+                    generated_content={
+                        "title": enhancement.title,
+                        "bullet_points": enhancement.bullet_points,
+                        "category": enhancement.category,
+                        "complexity": enhancement.complexity,
+                        "claude_prompt": enhancement.optimized_prompt
+                    }
+                )
+                
+            else:
+                # Azure AI not configured, use fallback
+                logger.warning("Azure AI not configured, using fallback processing")
+                await db_manager.update_idea_status(idea_id, 'submitted')
+                
+                return IdeaResponse(
+                    id=idea_id,
+                    status="submitted",
+                    message="Idea submitted successfully. Manual review required (Azure AI not configured)."
+                )
+                
+        except Exception as ai_error:
+            logger.error(f"AI processing failed for idea {idea_id}: {ai_error}")
+            await db_manager.update_idea_status(idea_id, 'processing_failed')
+            
+            return IdeaResponse(
+                id=idea_id,
+                status="processing_failed", 
+                message=f"Idea submitted but AI processing failed: {str(ai_error)}"
+            )
+            
+    except Exception as e:
+        logger.error(f"Failed to submit idea: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/ideas")
+async def get_ideas(limit: int = 50, status: Optional[str] = None):
+    """Retrieve stored ideas"""
+    try:
+        ideas = await db_manager.get_ideas(limit, status)
+        return {
+            "ideas": ideas,
+            "count": len(ideas),
+            "status_filter": status
+        }
+    except Exception as e:
+        logger.error(f"Failed to retrieve ideas: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/ideas/{idea_id}")
+async def get_idea(idea_id: int):
+    """Get a specific idea by ID"""
+    try:
+        ideas = await db_manager.get_ideas(1, None)
+        idea = next((i for i in ideas if i['id'] == idea_id), None)
+        
+        if not idea:
+            raise HTTPException(status_code=404, detail="Idea not found")
+        
+        return idea
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to retrieve idea {idea_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/ideas/stats")
+async def get_ideas_stats():
+    """Get statistics about submitted ideas"""
+    try:
+        all_ideas = await db_manager.get_ideas(1000)  # Get more for stats
+        
+        stats = {
+            "total_ideas": len(all_ideas),
+            "by_status": {},
+            "by_category": {},
+            "by_complexity": {},
+            "average_complexity": 0,
+            "recent_submissions": 0
+        }
+        
+        # Calculate statistics
+        complexities = []
+        recent_cutoff = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        for idea in all_ideas:
+            # Status distribution
+            status = idea.get('status', 'unknown')
+            stats["by_status"][status] = stats["by_status"].get(status, 0) + 1
+            
+            # Category distribution
+            category = idea.get('category', 'uncategorized')
+            stats["by_category"][category] = stats["by_category"].get(category, 0) + 1
+            
+            # Complexity distribution
+            complexity = idea.get('complexity', 3)
+            stats["by_complexity"][str(complexity)] = stats["by_complexity"].get(str(complexity), 0) + 1
+            complexities.append(complexity)
+            
+            # Recent submissions (today)
+            if idea.get('submission_date') and idea['submission_date'].date() >= recent_cutoff.date():
+                stats["recent_submissions"] += 1
+        
+        # Average complexity
+        if complexities:
+            stats["average_complexity"] = round(sum(complexities) / len(complexities), 2)
+        
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Failed to generate ideas stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/capabilities")
 async def get_capabilities():
     """Get JARVIS capabilities"""
@@ -364,7 +674,9 @@ async def get_capabilities():
             "text_to_speech": True,
             "conversation": True,
             "audio_analysis": True,
-            "spectrum_visualization": True
+            "spectrum_visualization": True,
+            "idea_submission": True,
+            "ai_enhancement": validate_azure_ai_config()
         },
         "german_features": {
             "natural_conversation": True,
@@ -372,6 +684,13 @@ async def get_capabilities():
             "date_queries": True,
             "greeting_responses": True,
             "help_system": True
+        },
+        "idea_features": {
+            "submission": True,
+            "ai_processing": validate_azure_ai_config(),
+            "categorization": True,
+            "complexity_assessment": True,
+            "claude_prompt_optimization": True
         }
     }
 

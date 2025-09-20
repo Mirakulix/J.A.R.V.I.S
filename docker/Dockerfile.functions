@@ -54,4 +54,4 @@ ENV FUNCTION_TIMEOUT=300
 ENV MAX_MEMORY_MB=1024
 
 # Resource limits will be set by orchestrator
-CMD ["python", "-m", "jarvis_functions.main"]
+CMD ["python", "-m", "jarvis_functions.app"]

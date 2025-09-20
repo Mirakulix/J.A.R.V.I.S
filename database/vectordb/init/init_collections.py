@@ -12,12 +12,11 @@ from chromadb.config import Settings
 def initialize_collections():
     """Initialize all required ChromaDB collections"""
     
-    # Connect to ChromaDB
-    client = chromadb.Client(Settings(
-        chroma_db_impl="duckdb+parquet",
-        persist_directory="/opt/chroma/data",
-        anonymized_telemetry=False
-    ))
+    # Connect to ChromaDB with new client architecture
+    client = chromadb.PersistentClient(
+        path="/opt/chroma/data",
+        settings=Settings(anonymized_telemetry=False)
+    )
     
     collections = [
         {

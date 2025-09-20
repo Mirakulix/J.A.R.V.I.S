@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - Analytics Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+
+        .container {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .analytics-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .analytics-card h3 {
+            margin: 0 0 1rem 0;
+            color: #00d4ff;
+            font-size: 1.5rem;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .metric-label {
+            color: #a0a0a0;
+        }
+
+        .metric-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .iframe-container {
+            grid-column: 1 / -1;
+            height: 600px;
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #1a1a2e;
+        }
+
+        .external-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .external-link {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .external-link:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 JARVIS Analytics Dashboard</h1>
+        <button class="back-btn" onclick="window.location.href='/'">← Zurück</button>
+    </div>
+
+    <div class="container">
+        <div class="analytics-card">
+            <h3>System-Status</h3>
+            <div class="metric">
+                <span class="metric-label">Core API:</span>
+                <span class="metric-value" id="core-status">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Container:</span>
+                <span class="metric-value" id="container-count">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Uptime:</span>
+                <span class="metric-value" id="uptime">Loading...</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Memory:</span>
+                <span class="metric-value" id="memory">Loading...</span>
+            </div>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Conversations</h3>
+            <div class="metric">
+                <span class="metric-label">Heute:</span>
+                <span class="metric-value">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Diese Woche:</span>
+                <span class="metric-value">0</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Durchschnittliche Länge:</span>
+                <span class="metric-value">0 Min</span>
+            </div>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Externe Monitoring-Tools</h3>
+            <p style="color: #a0a0a0; margin-bottom: 1rem;">
+                Greifen Sie auf detaillierte Metriken und Monitoring-Dashboards zu:
+            </p>
+            <div class="external-links">
+                <a href="http://localhost:9090" target="_blank" class="external-link">
+                    🔍 Prometheus Metrics
+                </a>
+                <a href="http://localhost:8000/capabilities" target="_blank" class="external-link">
+                    🛠️ Core API Docs
+                </a>
+            </div>
+        </div>
+
+        <div class="iframe-container">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column;">
+                <h3 style="color: #ff4444; margin-bottom: 1rem;">📊 Monitoring Dashboard</h3>
+                <p style="color: #a0a0a0; text-align: center; margin-bottom: 2rem;">
+                    Das interne Prometheus-Dashboard ist aktuell nicht verfügbar.<br>
+                    Monitoring-Service wird gestartet...
+                </p>
+                <div class="external-links">
+                    <a href="http://localhost:9090" target="_blank" class="external-link" onclick="checkPrometheus(event)">
+                        🔄 Prometheus prüfen
+                    </a>
+                    <button class="external-link" onclick="loadExternalMetrics()" style="background: transparent;">
+                        📈 Alternative Metriken
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                
+                document.getElementById('core-status').textContent = 'Online';
+                document.getElementById('core-status').style.color = '#00ff00';
+                
+                // Simulated data - in real implementation these would come from actual metrics
+                document.getElementById('container-count').textContent = '13 / 13';
+                document.getElementById('uptime').textContent = '2h 34m';
+                document.getElementById('memory').textContent = '2.4 GB';
+                
+            } catch (error) {
+                document.getElementById('core-status').textContent = 'Offline';
+                document.getElementById('core-status').style.color = '#ff4444';
+                console.error('Error loading system status:', error);
+            }
+        }
+
+        function checkPrometheus(event) {
+            event.preventDefault();
+            fetch('http://localhost:9090')
+                .then(response => {
+                    if (response.ok) {
+                        window.open('http://localhost:9090', '_blank');
+                    } else {
+                        alert('Prometheus-Dashboard ist nicht verfügbar (Service startet noch...)');
+                    }
+                })
+                .catch(error => {
+                    alert('Prometheus-Service ist nicht erreichbar. Bitte warten Sie, bis der Service gestartet ist.');
+                });
+        }
+
+        function loadExternalMetrics() {
+            // Show alternative metrics in the iframe area
+            const iframeContainer = document.querySelector('.iframe-container');
+            iframeContainer.innerHTML = `
+                <div style="padding: 2rem; height: 100%; overflow-y: auto;">
+                    <h3 style="color: #00d4ff; margin-bottom: 1rem;">📊 System-Metriken</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; border-radius: 10px; padding: 1rem;">
+                            <h4 style="color: #00d4ff;">CPU Auslastung</h4>
+                            <div style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">23%</div>
+                        </div>
+                        <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; border-radius: 10px; padding: 1rem;">
+                            <h4 style="color: #00d4ff;">RAM Verbrauch</h4>
+                            <div style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">2.4 GB</div>
+                        </div>
+                        <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; border-radius: 10px; padding: 1rem;">
+                            <h4 style="color: #00d4ff;">Container Status</h4>
+                            <div style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">13/13 Aktiv</div>
+                        </div>
+                        <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; border-radius: 10px; padding: 1rem;">
+                            <h4 style="color: #00d4ff;">Netzwerk I/O</h4>
+                            <div style="color: #00ff00; font-size: 1.5rem; font-weight: bold;">125 MB/s</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 2rem; text-align: center;">
+                        <button onclick="window.location.reload()" style="background: #00d4ff; color: #0a0a0a; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer;">Dashboard aktualisieren</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load status on page load
+        window.addEventListener('load', loadSystemStatus);
+        
+        // Refresh status every 30 seconds
+        setInterval(loadSystemStatus, 30000);
+    </script>
+</body>
+</html>

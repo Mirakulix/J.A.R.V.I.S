@@ -256,6 +256,7 @@
             text-decoration: none;
             font-family: inherit;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .back-button:hover {
@@ -265,7 +266,7 @@
     </style>
 </head>
 <body>
-    <a href="/" class="back-button">← Zurück</a>
+    <button class="back-button" onclick="goBack()">← Zurück</button>
 
     <div class="main-container">
         <div class="visualization-container">
@@ -427,8 +428,12 @@
                     addMessageToChat('jarvis', 'J.A.R.V.I.S', data.response);
                     updateStatus('Bereit für Gespräch');
                     
-                    // Simulate audio response animation
-                    simulateAudioResponse();
+                    // Auto-play TTS for conversation flow
+                    if (data.response && data.response.length > 0) {
+                        setTimeout(() => {
+                            speakMessage(data.response);
+                        }, 500); // Short delay for better UX
+                    }
                 } else {
                     addMessageToChat('jarvis', 'J.A.R.V.I.S', 'Entschuldigung, ich konnte nicht antworten. Bitte versuchen Sie es erneut.');
                     updateStatus('Fehler - Bereit für Gespräch');
@@ -509,15 +514,24 @@
                 const formData = new FormData();
                 formData.append('audio', audioBlob, 'recording.wav');
                 
-                const response = await fetch('http://localhost:8000/speech-to-text', {
+                const response = await fetch('/api/stt', {
                     method: 'POST',
                     body: formData
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('messageInput').value = data.text;
-                    updateStatus('Sprache erkannt - Bereit zum Senden');
+                    if (data.text && data.text.trim()) {
+                        document.getElementById('messageInput').value = data.text;
+                        updateStatus('Sprache erkannt - Sende Nachricht...');
+                        
+                        // Automatically send the transcribed message
+                        setTimeout(() => {
+                            sendMessage();
+                        }, 500);
+                    } else {
+                        updateStatus('Keine Sprache erkannt');
+                    }
                 } else {
                     updateStatus('Spracherkennung fehlgeschlagen');
                 }
@@ -554,10 +568,220 @@
             animate();
         }
 
-        // Toggle playback (placeholder)
-        function togglePlayback() {
-            // This would connect to text-to-speech endpoint
-            alert('Text-zu-Sprache Funktion - Coming soon!');
+        // Global TTS variables
+        let currentSynthesis = null;
+        let lastJarvisMessage = '';
+        let isPlaying = false;
+
+        // Toggle playback - Real TTS Implementation
+        async function togglePlayback() {
+            const playBtn = event.target;
+            
+            if (isPlaying) {
+                stopTTS();
+                return;
+            }
+            
+            // Get the last JARVIS message to speak
+            const jarvisMessages = document.querySelectorAll('.message.jarvis');
+            if (jarvisMessages.length === 0) {
+                alert('Keine JARVIS-Nachricht zum Vorlesen verfügbar.');
+                return;
+            }
+            
+            const lastMessage = jarvisMessages[jarvisMessages.length - 1];
+            const messageText = lastMessage.querySelector('div:last-child').textContent.trim();
+            
+            if (!messageText) {
+                alert('Keine Nachricht zum Vorlesen gefunden.');
+                return;
+            }
+            
+            playBtn.textContent = '⏸️ Stoppen';
+            isPlaying = true;
+            updateStatus('Sprachausgabe läuft...');
+            
+            try {
+                // Try Web Speech API first (fastest, no latency)
+                if ('speechSynthesis' in window) {
+                    await speakWithWebAPI(messageText, playBtn);
+                } else {
+                    // Fallback to server TTS
+                    await speakWithServerTTS(messageText, playBtn);
+                }
+            } catch (error) {
+                console.error('TTS Error:', error);
+                try {
+                    // Fallback to server TTS if Web Speech fails
+                    await speakWithServerTTS(messageText, playBtn);
+                } catch (serverError) {
+                    console.error('Server TTS Error:', serverError);
+                    alert('Sprachausgabe fehlgeschlagen. Bitte versuchen Sie es erneut.');
+                    resetTTSButton(playBtn);
+                }
+            }
+        }
+
+        // Web Speech API implementation
+        async function speakWithWebAPI(text, button) {
+            return new Promise((resolve, reject) => {
+                if (!('speechSynthesis' in window)) {
+                    reject(new Error('Web Speech API not supported'));
+                    return;
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Configure for German
+                utterance.lang = 'de-DE';
+                utterance.rate = 0.9; // Slightly slower for conversation
+                utterance.pitch = 1.0;
+                utterance.volume = 0.8;
+                
+                // Try to use a German voice
+                const voices = speechSynthesis.getVoices();
+                const germanVoice = voices.find(voice => 
+                    voice.lang.startsWith('de') || 
+                    voice.name.toLowerCase().includes('german') ||
+                    voice.name.toLowerCase().includes('deutsch')
+                );
+                
+                if (germanVoice) {
+                    utterance.voice = germanVoice;
+                }
+                
+                utterance.onstart = () => {
+                    simulateAudioResponse();
+                };
+                
+                utterance.onend = () => {
+                    resetTTSButton(button);
+                    resolve();
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event.error);
+                    resetTTSButton(button);
+                    reject(new Error(`Speech synthesis failed: ${event.error}`));
+                };
+                
+                currentSynthesis = utterance;
+                speechSynthesis.speak(utterance);
+            });
+        }
+
+        // Server-side TTS implementation
+        async function speakWithServerTTS(text, button) {
+            try {
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        language: 'de',
+                        voice: 'default'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server TTS failed: ${response.status}`);
+                }
+                
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                
+                audio.onplay = () => {
+                    simulateAudioResponse();
+                };
+                
+                audio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    resetTTSButton(button);
+                };
+                
+                audio.onerror = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    resetTTSButton(button);
+                    throw new Error('Audio playback failed');
+                };
+                
+                await audio.play();
+                
+            } catch (error) {
+                resetTTSButton(button);
+                throw error;
+            }
+        }
+
+        // Stop TTS playback
+        function stopTTS() {
+            if (currentSynthesis && 'speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                currentSynthesis = null;
+            }
+            
+            // Stop any playing audio
+            const audioElements = document.querySelectorAll('audio');
+            audioElements.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+            
+            const playBtn = document.querySelector('.audio-controls .btn:last-child');
+            resetTTSButton(playBtn);
+        }
+
+        // Reset TTS button state
+        function resetTTSButton(button) {
+            if (button) {
+                button.textContent = '🔊 Wiedergabe';
+            }
+            isPlaying = false;
+            updateStatus('Bereit für Gespräch');
+        }
+
+        // Speak a specific message (used for auto-play)
+        async function speakMessage(text) {
+            if (!text || isPlaying) return;
+            
+            try {
+                // Use Web Speech API for automatic responses (faster)
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'de-DE';
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 0.8;
+                    
+                    // Find German voice
+                    const voices = speechSynthesis.getVoices();
+                    const germanVoice = voices.find(voice => 
+                        voice.lang.startsWith('de') || 
+                        voice.name.toLowerCase().includes('german') ||
+                        voice.name.toLowerCase().includes('deutsch')
+                    );
+                    
+                    if (germanVoice) {
+                        utterance.voice = germanVoice;
+                    }
+                    
+                    utterance.onstart = () => {
+                        simulateAudioResponse();
+                        updateStatus('J.A.R.V.I.S spricht...');
+                    };
+                    
+                    utterance.onend = () => {
+                        updateStatus('Bereit für Gespräch');
+                    };
+                    
+                    speechSynthesis.speak(utterance);
+                }
+            } catch (error) {
+                console.error('Auto-speak error:', error);
+            }
         }
 
         // Initialize WebSocket connection
@@ -591,6 +815,17 @@
             }
         }
 
+        // Go back function for back button
+        function goBack() {
+            // Try to go back in history first
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to home page
+                window.location.href = '/';
+            }
+        }
+
         // Initialize everything when page loads
         window.addEventListener('load', () => {
             initializeSpectrum();
@@ -599,6 +834,13 @@
             
             // Set focus to input
             document.getElementById('messageInput').focus();
+            
+            // Load available voices for better TTS
+            if ('speechSynthesis' in window) {
+                speechSynthesis.addEventListener('voiceschanged', () => {
+                    console.log('Available voices loaded');
+                });
+            }
         });
 
         // Cleanup on page unload

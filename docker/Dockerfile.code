@@ -58,4 +58,4 @@ ENV AUTO_COMMIT=false
 ENV CODE_REVIEW_REQUIRED=true
 ENV WORKSPACE_PATH=/app/workspace
 
-CMD ["python", "-m", "jarvis_code.main"]
+CMD ["python", "-m", "jarvis_code.app"]

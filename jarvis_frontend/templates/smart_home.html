@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S - Smart Home</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+
+        .container {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .room-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .room-card h3 {
+            margin: 0 0 1.5rem 0;
+            color: #00d4ff;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .device {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .device-info {
+            flex: 1;
+        }
+
+        .device-name {
+            color: #00d4ff;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .device-status {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        .device-control {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .power-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #00d4ff;
+            background: transparent;
+            color: #00d4ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .power-btn.on {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+
+        .power-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .slider {
+            width: 100px;
+            height: 5px;
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 5px;
+            outline: none;
+            margin: 0 1rem;
+        }
+
+        .temperature-display {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .temp-value {
+            font-size: 2rem;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .temp-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .temp-btn {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .temp-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0a;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+        }
+
+        .status-online {
+            background: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+        }
+
+        .status-offline {
+            background: #ff4444;
+            box-shadow: 0 0 5px #ff4444;
+        }
+
+        .energy-monitor {
+            grid-column: 1 / -1;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 2rem;
+        }
+
+        .energy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .energy-metric {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .energy-value {
+            font-size: 1.5rem;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .energy-label {
+            color: #a0a0a0;
+            margin-top: 0.5rem;
+        }
+
+        .coming-soon-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            color: #ff4444;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .room-card {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 JARVIS Smart Home Control</h1>
+        <button class="back-btn" onclick="window.location.href='/'">← Zurück</button>
+    </div>
+
+    <div class="container">
+        <div class="room-card">
+            <h3>🛏️ Schlafzimmer <span class="status-indicator status-online"></span></h3>
+            <div class="device">
+                <div class="device-info">
+                    <div class="device-name">Hauptlicht</div>
+                    <div class="device-status">Philips Hue • 75% Helligkeit</div>
+                </div>
+                <div class="device-control">
+                    <input type="range" class="slider" min="0" max="100" value="75">
+                    <button class="power-btn on" onclick="toggleDevice(this)">💡</button>
+                </div>
+            </div>
+            <div class="device">
+                <div class="device-info">
+                    <div class="device-name">Nachttischlampe</div>
+                    <div class="device-status">IKEA TRÅDFRI • Aus</div>
+                </div>
+                <div class="device-control">
+                    <input type="range" class="slider" min="0" max="100" value="0">
+                    <button class="power-btn" onclick="toggleDevice(this)">💡</button>
+                </div>
+            </div>
+            <div class="coming-soon-overlay">Hardware nicht verbunden</div>
+        </div>
+
+        <div class="room-card">
+            <h3>🍽️ Wohnzimmer <span class="status-indicator status-offline"></span></h3>
+            <div class="device">
+                <div class="device-info">
+                    <div class="device-name">TV</div>
+                    <div class="device-status">Samsung Smart TV • Standby</div>
+                </div>
+                <div class="device-control">
+                    <button class="power-btn" onclick="toggleDevice(this)">📺</button>
+                </div>
+            </div>
+            <div class="device">
+                <div class="device-info">
+                    <div class="device-name">Soundbar</div>
+                    <div class="device-status">Sonos Arc • Aus</div>
+                </div>
+                <div class="device-control">
+                    <input type="range" class="slider" min="0" max="100" value="45">
+                    <button class="power-btn" onclick="toggleDevice(this)">🔊</button>
+                </div>
+            </div>
+            <div class="coming-soon-overlay">Hardware nicht verbunden</div>
+        </div>
+
+        <div class="room-card">
+            <h3>🌡️ Klima-Kontrolle <span class="status-indicator status-offline"></span></h3>
+            <div class="temperature-display">
+                <div class="temp-value" id="current-temp">22°C</div>
+                <div style="color: #a0a0a0;">Aktuelle Temperatur</div>
+            </div>
+            <div class="temperature-display">
+                <div class="temp-value" id="target-temp">21°C</div>
+                <div style="color: #a0a0a0;">Zieltemperatur</div>
+                <div class="temp-controls">
+                    <button class="temp-btn" onclick="adjustTemp(-1)">-</button>
+                    <button class="temp-btn" onclick="adjustTemp(1)">+</button>
+                </div>
+            </div>
+            <div class="coming-soon-overlay">Thermostat nicht verbunden</div>
+        </div>
+
+        <div class="room-card">
+            <h3>🔒 Sicherheit <span class="status-indicator status-online"></span></h3>
+            <div class="device">
+                <div class="device-info">
+                    <div class="device-name">Haustür</div>
+                    <div class="device-status">Yale Smart Lock • Verriegelt</div>
+                </div>
+                <div class="device-control">
+                    <button class="power-btn on" onclick="toggleDevice(this)">🔒</button>
+                </div>
+            </div>
+            <div class="device">
+                <div class="device-info">
+                    <div class="device-name">Garage</div>
+                    <div class="device-status">MyQ Garage • Geschlossen</div>
+                </div>
+                <div class="device-control">
+                    <button class="power-btn on" onclick="toggleDevice(this)">🚪</button>
+                </div>
+            </div>
+            <div class="coming-soon-overlay">Sicherheitssystem nicht konfiguriert</div>
+        </div>
+
+        <div class="energy-monitor">
+            <h3>⚡ Energieverbrauch</h3>
+            <div class="energy-grid">
+                <div class="energy-metric">
+                    <div class="energy-value">2.4 kW</div>
+                    <div class="energy-label">Aktueller Verbrauch</div>
+                </div>
+                <div class="energy-metric">
+                    <div class="energy-value">34.2 kWh</div>
+                    <div class="energy-label">Heute</div>
+                </div>
+                <div class="energy-metric">
+                    <div class="energy-value">218.5 kWh</div>
+                    <div class="energy-label">Diese Woche</div>
+                </div>
+                <div class="energy-metric">
+                    <div class="energy-value">€89.50</div>
+                    <div class="energy-label">Monatliche Kosten</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 2rem; color: #ff4444;">
+                📊 Energiemonitoring-System in Entwicklung
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetTemp = 21;
+
+        function toggleDevice(button) {
+            button.classList.toggle('on');
+            
+            // Simulate device response
+            setTimeout(() => {
+                if (button.classList.contains('on')) {
+                    button.style.background = '#00d4ff';
+                    button.style.color = '#0a0a0a';
+                } else {
+                    button.style.background = 'transparent';
+                    button.style.color = '#00d4ff';
+                }
+            }, 200);
+        }
+
+        function adjustTemp(change) {
+            targetTemp += change;
+            if (targetTemp < 15) targetTemp = 15;
+            if (targetTemp > 30) targetTemp = 30;
+            
+            document.getElementById('target-temp').textContent = targetTemp + '°C';
+        }
+
+        // Simulate temperature updates
+        setInterval(() => {
+            const currentTemp = 20 + Math.random() * 4;
+            document.getElementById('current-temp').textContent = currentTemp.toFixed(1) + '°C';
+        }, 5000);
+
+        // Show notification that this is a demo
+        setTimeout(() => {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(255, 68, 68, 0.9);
+                color: white;
+                padding: 1rem;
+                border-radius: 10px;
+                border: 2px solid #ff4444;
+                z-index: 1000;
+                max-width: 300px;
+            `;
+            notification.innerHTML = `
+                <strong>🚧 Demo-Modus</strong><br>
+                Smart Home Hardware ist noch nicht konfiguriert. 
+                Dies ist eine Vorschau der Benutzeroberfläche.
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }, 1000);
+    </script>
+</body>
+</html>

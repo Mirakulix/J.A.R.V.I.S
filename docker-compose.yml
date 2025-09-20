@@ -47,6 +47,9 @@ services:
       - REDIS_URL=redis://jarvis-redis:6379
       - ONEPASSWORD_SERVICE_ACCOUNT_TOKEN_FILE=/run/secrets/onepassword_token
       - CLAUDE_CODE_API_KEY_FILE=/run/secrets/claude_code_api_key
+      - AZURE_AI_API_KEY=${AZURE_AI_API_KEY}
+      - AZURE_AI_ENDPOINT=${AZURE_AI_ENDPOINT}
+      - AZURE_AI_DEPLOYMENT=${AZURE_AI_DEPLOYMENT}
     volumes:
       - jarvis-core-data:/app/data
       - jarvis-core-logs:/app/logs
@@ -451,6 +454,7 @@ services:
       - jarvis-core
     networks:
       - jarvis-frontend-net
+      - jarvis-internal-net
     restart: unless-stopped
     deploy:
       resources:

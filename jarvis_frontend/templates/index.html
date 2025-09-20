@@ -111,6 +111,25 @@
             content: "▶ ";
             color: #00d4ff;
         }
+
+        .preview-banner {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: linear-gradient(45deg, #ff6b35, #ff8e53);
+            color: white;
+            padding: 5px 40px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transform: rotate(35deg);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .nav-card {
+            position: relative;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -134,7 +153,8 @@
                 </ul>
             </div>
 
-            <div class="nav-card" onclick="alert('Coming soon!')">
+            <div class="nav-card" onclick="window.location.href='/smart-home'">
+                <div class="preview-banner">PREVIEW</div>
                 <h3>🏠 Smart Home</h3>
                 <p>Steuern Sie Ihr Zuhause mit J.A.R.V.I.S</p>
                 <ul class="features-list">
@@ -145,7 +165,8 @@
                 </ul>
             </div>
 
-            <div class="nav-card" onclick="alert('Coming soon!')">
+            <div class="nav-card" onclick="window.location.href='/analytics'">
+                <div class="preview-banner">PREVIEW</div>
                 <h3>📊 Analytics</h3>
                 <p>Datenanalyse und Berichte</p>
                 <ul class="features-list">
@@ -156,7 +177,8 @@
                 </ul>
             </div>
 
-            <div class="nav-card" onclick="alert('Coming soon!')">
+            <div class="nav-card" onclick="window.location.href='/settings'">
+                <div class="preview-banner">PREVIEW</div>
                 <h3>🛠️ Einstellungen</h3>
                 <p>Konfiguration und Verwaltung</p>
                 <ul class="features-list">
@@ -164,6 +186,40 @@
                     <li>API-Konfiguration</li>
                     <li>Backup & Restore</li>
                     <li>Benutzerprofile</li>
+                </ul>
+            </div>
+
+            <div class="nav-card" onclick="window.location.href='/meeting-notes'">
+                <div class="preview-banner">PREVIEW</div>
+                <h3>📝 Meeting Notes Assistant</h3>
+                <p>KI-gestützte Besprechungsnotizen aus Audio-Transkripten</p>
+                <ul class="features-list">
+                    <li>Automatische Transkription</li>
+                    <li>Struktuierte Notizen</li>
+                    <li>ToDo-Extraktion</li>
+                    <li>Verantwortlichkeiten</li>
+                </ul>
+            </div>
+
+            <div class="nav-card" onclick="window.location.href='/ideas'">
+                <h3>💡 Ideen Lab</h3>
+                <p>Neue Fähigkeiten und Features mit KI entwickeln</p>
+                <ul class="features-list">
+                    <li>Ideen einreichen</li>
+                    <li>KI-Enhanced Konzepte</li>
+                    <li>Claude Code Integration</li>
+                    <li>Umsetzungsplanung</li>
+                </ul>
+            </div>
+
+            <div class="nav-card" onclick="window.open('http://localhost:8000/docs', '_blank')">
+                <h3>📚 API Dokumentation</h3>
+                <p>Vollständige Entwickler-Dokumentation der JARVIS Core API</p>
+                <ul class="features-list">
+                    <li>Interactive API Explorer</li>
+                    <li>Endpoint-Referenz</li>
+                    <li>Authentifizierung</li>
+                    <li>Code-Beispiele</li>
                 </ul>
             </div>
         </div>

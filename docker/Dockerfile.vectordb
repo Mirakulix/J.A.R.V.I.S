@@ -9,10 +9,12 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     curl \
     wget \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install enhanced vector processing libraries
 RUN pip install --no-cache-dir --break-system-packages \
+    chromadb \
     sentence-transformers \
     langchain \
     openai \

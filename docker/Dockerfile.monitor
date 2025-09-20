@@ -32,8 +32,9 @@ COPY shared/ ./shared/
 # Create monitoring directories
 RUN mkdir -p /app/metrics /app/logs /app/alerts
 
-# Create non-root user
-RUN useradd -m -u 1000 jarvis && \
+# Create non-root user with docker group
+RUN groupadd -g 124 docker && \
+    useradd -m -u 1000 -G docker jarvis && \
     chown -R jarvis:jarvis /app
 USER jarvis
 
@@ -50,4 +51,4 @@ ENV ALERT_WEBHOOK_URL=""
 ENV LOG_RETENTION_DAYS=30
 ENV METRICS_INTERVAL=15
 
-CMD ["python", "-m", "jarvis_monitor.main"]
+CMD ["python", "-m", "jarvis_monitor.app"]
