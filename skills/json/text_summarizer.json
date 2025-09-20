@@ -1,0 +1,109 @@
+{
+  "skill_id": "text_summarizer",
+  "name": "AI Text Summarization",
+  "description": "Summarizes long texts, documents, or articles using AI with adjustable summary length and style",
+  "category": "simple",
+  "version": "1.0.0",
+  "dependencies": ["openai", "tiktoken", "nltk", "transformers"],
+  "api_requirements": {
+    "openai_api": {
+      "provider": "openai",
+      "api_key_env_var": "OPENAI_API_KEY",
+      "model": "gpt-4",
+      "fallback_model": "gpt-3.5-turbo"
+    }
+  },
+  "inputs": {
+    "text": {
+      "type": "string",
+      "required": true,
+      "max_length": 100000,
+      "description": "Text content to summarize"
+    },
+    "summary_length": {
+      "type": "string",
+      "required": false,
+      "default": "medium",
+      "allowed_values": ["short", "medium", "long", "bullet_points"],
+      "description": "Desired summary length"
+    },
+    "summary_style": {
+      "type": "string",
+      "required": false,
+      "default": "neutral",
+      "allowed_values": ["neutral", "professional", "casual", "technical", "executive"],
+      "description": "Summary writing style"
+    },
+    "focus_keywords": {
+      "type": "array",
+      "required": false,
+      "items": {"type": "string"},
+      "description": "Keywords to emphasize in summary"
+    },
+    "language": {
+      "type": "string",
+      "required": false,
+      "default": "auto_detect",
+      "description": "Input text language"
+    }
+  },
+  "outputs": {
+    "summary": {
+      "type": "string",
+      "description": "Generated summary text"
+    },
+    "key_points": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Main points extracted from text"
+    },
+    "word_count": {
+      "type": "object",
+      "properties": {
+        "original": {"type": "integer"},
+        "summary": {"type": "integer"},
+        "reduction_percentage": {"type": "float"}
+      }
+    },
+    "confidence_score": {
+      "type": "float",
+      "description": "AI confidence in summary quality (0-1)"
+    },
+    "detected_language": {
+      "type": "string",
+      "description": "Detected input language"
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "summarize_text",
+    "timeout": 60,
+    "retry_attempts": 2
+  },
+  "text_processing": {
+    "chunking_strategy": "semantic",
+    "max_chunk_size": 4000,
+    "overlap_tokens": 200,
+    "preprocessing": {
+      "clean_formatting": true,
+      "remove_headers_footers": true,
+      "normalize_whitespace": true
+    }
+  },
+  "quality_control": {
+    "coherence_check": true,
+    "factual_consistency": true,
+    "completeness_validation": true
+  },
+  "error_handling": {
+    "text_too_long": "Implement chunking and merge summaries",
+    "api_limit_exceeded": "Switch to fallback model",
+    "language_detection_failed": "Default to English processing"
+  },
+  "security": {
+    "requires_api_key": true,
+    "rate_limit": "20_per_hour",
+    "data_privacy": "temporary_processing_only",
+    "content_filtering": true
+  }
+}

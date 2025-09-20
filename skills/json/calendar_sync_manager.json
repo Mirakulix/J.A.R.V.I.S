@@ -1,0 +1,283 @@
+{
+  "skill_id": "calendar_sync_manager",
+  "name": "Multi-Platform Calendar Synchronization Manager",
+  "description": "Comprehensive calendar management system that synchronizes, merges, and manages events across multiple Google and Outlook calendars with intelligent conflict resolution and bi-directional sync",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["google-api-python-client", "exchangelib", "icalendar", "pytz", "dateutil", "sqlalchemy", "apscheduler", "deepdiff"],
+  "api_requirements": {
+    "google_calendar": {
+      "provider": "google",
+      "credentials_file": "google_calendar_credentials.json",
+      "scopes": [
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/calendar.events"
+      ],
+      "quota_limit": "1000000_requests_per_day"
+    },
+    "outlook_calendar": {
+      "provider": "microsoft",
+      "client_id_env_var": "OUTLOOK_CLIENT_ID",
+      "client_secret_env_var": "OUTLOOK_CLIENT_SECRET",
+      "tenant_id_env_var": "OUTLOOK_TENANT_ID",
+      "redirect_uri_env_var": "OUTLOOK_REDIRECT_URI",
+      "scopes": ["https://graph.microsoft.com/calendars.readwrite"]
+    },
+    "exchange_server": {
+      "provider": "microsoft",
+      "server_env_var": "EXCHANGE_SERVER",
+      "email_env_var": "EXCHANGE_EMAIL",
+      "username_env_var": "EXCHANGE_USERNAME",
+      "password_env_var": "EXCHANGE_PASSWORD",
+      "autodiscover": true
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["sync_all", "sync_specific", "create_event", "update_event", "delete_event", "resolve_conflicts", "backup_calendars", "restore_backup"],
+      "description": "Calendar management action to perform"
+    },
+    "calendar_sources": {
+      "type": "array",
+      "required": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "calendar_id": {"type": "string", "required": true},
+          "provider": {"type": "string", "enum": ["google", "outlook", "exchange"], "required": true},
+          "calendar_name": {"type": "string"},
+          "sync_direction": {"type": "string", "enum": ["bidirectional", "read_only", "write_only"], "default": "bidirectional"},
+          "priority": {"type": "integer", "min": 1, "max": 10, "default": 5},
+          "color_mapping": {"type": "string"},
+          "category_filter": {"type": "array"},
+          "sync_enabled": {"type": "boolean", "default": true}
+        }
+      },
+      "description": "List of calendar sources to synchronize"
+    },
+    "event_data": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "title": {"type": "string", "required": true},
+        "description": {"type": "string"},
+        "start_time": {"type": "string", "format": "datetime", "required": true},
+        "end_time": {"type": "string", "format": "datetime", "required": true},
+        "location": {"type": "string"},
+        "attendees": {"type": "array", "items": {"type": "string"}},
+        "category": {"type": "string"},
+        "priority": {"type": "string", "enum": ["low", "normal", "high"]},
+        "reminder_settings": {"type": "array"},
+        "recurrence_rule": {"type": "string"},
+        "timezone": {"type": "string"},
+        "jarvis_metadata": {"type": "object"}
+      }
+    },
+    "sync_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "sync_frequency": {"type": "string", "enum": ["real_time", "every_5min", "every_15min", "hourly", "daily"], "default": "every_15min"},
+        "conflict_resolution": {"type": "string", "enum": ["manual", "priority_based", "latest_wins", "merge_intelligent"], "default": "merge_intelligent"},
+        "duplicate_detection": {"type": "boolean", "default": true},
+        "historical_sync_days": {"type": "integer", "default": 90},
+        "future_sync_days": {"type": "integer", "default": 365},
+        "preserve_original_metadata": {"type": "boolean", "default": true},
+        "enable_smart_categorization": {"type": "boolean", "default": true}
+      }
+    },
+    "jarvis_enhancements": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "add_travel_time": {"type": "boolean", "default": true},
+        "add_preparation_time": {"type": "boolean", "default": true},
+        "enrich_location_data": {"type": "boolean", "default": true},
+        "add_contact_information": {"type": "boolean", "default": true},
+        "suggest_optimal_timing": {"type": "boolean", "default": true},
+        "add_weather_forecast": {"type": "boolean", "default": false},
+        "link_related_documents": {"type": "boolean", "default": true}
+      }
+    },
+    "backup_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "backup_frequency": {"type": "string", "enum": ["daily", "weekly", "monthly"], "default": "daily"},
+        "retention_days": {"type": "integer", "default": 30},
+        "backup_format": {"type": "string", "enum": ["ical", "json", "both"], "default": "both"},
+        "include_attachments": {"type": "boolean", "default": true}
+      }
+    }
+  },
+  "outputs": {
+    "sync_results": {
+      "type": "object",
+      "properties": {
+        "sync_success": {"type": "boolean"},
+        "calendars_processed": {"type": "integer"},
+        "events_synchronized": {"type": "integer"},
+        "events_created": {"type": "integer"},
+        "events_updated": {"type": "integer"},
+        "events_deleted": {"type": "integer"},
+        "conflicts_detected": {"type": "integer"},
+        "conflicts_resolved": {"type": "integer"},
+        "sync_duration": {"type": "number"},
+        "last_sync_timestamp": {"type": "string"}
+      }
+    },
+    "unified_calendar": {
+      "type": "array",
+      "description": "Merged calendar events from all sources",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_id": {"type": "string"},
+          "unified_id": {"type": "string"},
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "start_time": {"type": "string"},
+          "end_time": {"type": "string"},
+          "location": {"type": "string"},
+          "attendees": {"type": "array"},
+          "source_calendar": {"type": "string"},
+          "provider": {"type": "string"},
+          "last_modified": {"type": "string"},
+          "jarvis_enhancements": {"type": "object"},
+          "sync_status": {"type": "string"}
+        }
+      }
+    },
+    "conflict_report": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "conflict_id": {"type": "string"},
+          "conflict_type": {"type": "string"},
+          "affected_events": {"type": "array"},
+          "resolution_applied": {"type": "string"},
+          "manual_intervention_required": {"type": "boolean"},
+          "suggested_actions": {"type": "array"}
+        }
+      }
+    },
+    "calendar_statistics": {
+      "type": "object",
+      "properties": {
+        "total_events": {"type": "integer"},
+        "events_by_calendar": {"type": "object"},
+        "events_by_category": {"type": "object"},
+        "upcoming_events_count": {"type": "integer"},
+        "recurring_events_count": {"type": "integer"},
+        "calendar_health_score": {"type": "number"}
+      }
+    },
+    "enhancement_summary": {
+      "type": "object",
+      "properties": {
+        "events_enhanced": {"type": "integer"},
+        "locations_enriched": {"type": "integer"},
+        "travel_times_added": {"type": "integer"},
+        "contacts_linked": {"type": "integer"},
+        "documents_linked": {"type": "integer"}
+      }
+    },
+    "backup_status": {
+      "type": "object",
+      "properties": {
+        "backup_created": {"type": "boolean"},
+        "backup_location": {"type": "string"},
+        "backup_size": {"type": "number"},
+        "events_backed_up": {"type": "integer"},
+        "backup_timestamp": {"type": "string"}
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "manage_calendar_sync",
+    "timeout": 600,
+    "retry_attempts": 3,
+    "async_processing": true,
+    "background_sync": true
+  },
+  "synchronization_engine": {
+    "conflict_resolution": {
+      "duplicate_detection_algorithm": "fuzzy_matching",
+      "merge_strategies": ["title_merge", "time_merge", "attendee_merge", "location_merge"],
+      "priority_rules": ["manual_override", "latest_modification", "source_priority", "attendee_count"],
+      "validation_checks": ["time_overlap", "location_conflicts", "attendee_availability"]
+    },
+    "data_mapping": {
+      "field_mapping": true,
+      "timezone_conversion": true,
+      "format_standardization": true,
+      "metadata_preservation": true
+    },
+    "intelligent_features": {
+      "smart_categorization": true,
+      "automatic_tagging": true,
+      "pattern_recognition": true,
+      "predictive_scheduling": true
+    }
+  },
+  "jarvis_ai_features": {
+    "location_enhancement": {
+      "address_standardization": true,
+      "coordinates_addition": true,
+      "travel_time_calculation": true,
+      "traffic_awareness": true,
+      "public_transport_integration": true
+    },
+    "smart_descriptions": {
+      "agenda_generation": true,
+      "preparation_suggestions": true,
+      "related_context": true,
+      "contact_integration": true
+    },
+    "scheduling_optimization": {
+      "buffer_time_management": true,
+      "commute_optimization": true,
+      "energy_level_consideration": true,
+      "preference_learning": true
+    }
+  },
+  "data_storage": {
+    "local_database": {
+      "engine": "sqlite",
+      "encryption": true,
+      "indexing": true,
+      "compression": true
+    },
+    "sync_state_tracking": {
+      "change_detection": true,
+      "version_control": true,
+      "rollback_capability": true
+    }
+  },
+  "security_privacy": {
+    "data_encryption": true,
+    "secure_api_storage": true,
+    "access_logging": true,
+    "gdpr_compliance": true,
+    "data_anonymization": true
+  },
+  "error_handling": {
+    "api_rate_limits": "Implement intelligent backoff and request queuing",
+    "network_connectivity": "Cache changes locally and sync when connection restored",
+    "authentication_failures": "Refresh tokens automatically and notify user if manual intervention needed",
+    "calendar_conflicts": "Apply configured resolution strategy and log conflicts for review",
+    "data_corruption": "Restore from backup and re-sync affected calendars",
+    "provider_downtime": "Continue with available providers and queue changes for unavailable ones"
+  },
+  "monitoring_analytics": {
+    "sync_performance": true,
+    "error_tracking": true,
+    "usage_analytics": true,
+    "calendar_insights": true,
+    "optimization_recommendations": true
+  }
+}

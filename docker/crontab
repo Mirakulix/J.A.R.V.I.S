@@ -1,0 +1,29 @@
+# JARVIS Connector Cron Jobs for External Service Synchronization
+# Format: minute hour day month weekday command
+
+# Sync Google Calendar every 15 minutes
+*/15 * * * * /usr/local/bin/python3 /app/jarvis_connector/sync_google_calendar.py >> /var/log/cron.log 2>&1
+
+# Sync Outlook Calendar every 15 minutes (offset by 7 minutes)
+7,22,37,52 * * * * /usr/local/bin/python3 /app/jarvis_connector/sync_outlook_calendar.py >> /var/log/cron.log 2>&1
+
+# Sync Google Contacts every hour
+0 * * * * /usr/local/bin/python3 /app/jarvis_connector/sync_google_contacts.py >> /var/log/cron.log 2>&1
+
+# Sync Outlook Contacts every hour (offset by 30 minutes)
+30 * * * * /usr/local/bin/python3 /app/jarvis_connector/sync_outlook_contacts.py >> /var/log/cron.log 2>&1
+
+# Sync Gmail emails every 10 minutes
+*/10 * * * * /usr/local/bin/python3 /app/jarvis_connector/sync_gmail.py >> /var/log/cron.log 2>&1
+
+# Sync Outlook emails every 10 minutes (offset by 5 minutes)
+5,15,25,35,45,55 * * * * /usr/local/bin/python3 /app/jarvis_connector/sync_outlook_email.py >> /var/log/cron.log 2>&1
+
+# Health check - ping core service every 5 minutes
+*/5 * * * * /usr/bin/curl -f http://jarvis-core:8000/health > /dev/null 2>&1 || echo "Core service health check failed at $(date)" >> /var/log/cron.log
+
+# Clean up temporary sync files daily at 2 AM
+0 2 * * * /usr/bin/find /tmp -name "jarvis_sync_*" -mtime +1 -delete >> /var/log/cron.log 2>&1
+
+# Rotate connector logs weekly
+0 3 * * 0 /usr/bin/logrotate /etc/logrotate.d/jarvis-connector >> /var/log/cron.log 2>&1

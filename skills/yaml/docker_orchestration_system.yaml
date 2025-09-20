@@ -1,0 +1,553 @@
+skill_id: docker_orchestration_system
+name: Self-Modifying JARVIS Docker Orchestration System
+description: Advanced Docker-based architecture for self-modifying AI system with container isolation, automated code deployment, testing, and security boundaries for safe autonomous development
+category: complex
+version: 1.0.0
+dependencies:
+  - docker
+  - docker-compose
+  - kubernetes
+  - redis
+  - nginx
+  - celery
+  - pytest
+  - ansible
+
+api_requirements:
+  docker_api:
+    provider: docker
+    socket_path: /var/run/docker.sock
+    api_version: 1.43
+    compose_version: 3.8
+    buildkit_enabled: true
+  kubernetes_api:
+    provider: kubernetes
+    config_path: ~/.kube/config
+    namespace: jarvis-system
+    cluster_name: jarvis-cluster
+  container_registry:
+    provider: docker_hub
+    registry_url: registry.hub.docker.com
+    namespace: jarvis-ai
+    credentials_ref: onepassword_integration
+  claude_code_api:
+    provider: anthropic
+    api_key_env_var: CLAUDE_CODE_API_KEY
+    skill_reference: onepassword_integration
+  monitoring:
+    prometheus:
+      port: 9090
+    grafana:
+      port: 3000
+    jaeger:
+      port: 16686
+
+inputs:
+  orchestration_action:
+    type: string
+    required: true
+    allowed_values: [deploy_system, scale_functions, update_code, run_tests, rollback, monitor_health, security_scan, backup_system]
+    description: Docker orchestration action to perform
+  container_config:
+    type: object
+    required: false
+    properties:
+      jarvis_core:
+        type: object
+        properties:
+          image:
+            type: string
+            default: jarvis-ai/core:latest
+          replicas:
+            type: integer
+            default: 1
+          cpu_limit:
+            type: string
+            default: 2000m
+          memory_limit:
+            type: string
+            default: 4Gi
+          persistent_storage:
+            type: boolean
+            default: true
+          environment:
+            type: object
+          health_check:
+            type: object
+      jarvis_functions:
+        type: object
+        properties:
+          base_image:
+            type: string
+            default: jarvis-ai/functions:latest
+          max_replicas:
+            type: integer
+            default: 10
+          min_replicas:
+            type: integer
+            default: 2
+          auto_scaling:
+            type: boolean
+            default: true
+          resource_limits:
+            type: object
+          sandbox_security:
+            type: boolean
+            default: true
+          function_timeout:
+            type: integer
+            default: 300
+      jarvis_code:
+        type: object
+        properties:
+          image:
+            type: string
+            default: jarvis-ai/code-dev:latest
+          claude_integration:
+            type: boolean
+            default: true
+          git_integration:
+            type: boolean
+            default: true
+          code_analysis_tools:
+            type: array
+            default: [pylint, black, mypy, bandit]
+          isolated_workspace:
+            type: boolean
+            default: true
+      jarvis_test:
+        type: object
+        properties:
+          image:
+            type: string
+            default: jarvis-ai/testing:latest
+          test_frameworks:
+            type: array
+            default: [pytest, unittest, integration]
+          security_scanning:
+            type: boolean
+            default: true
+          performance_testing:
+            type: boolean
+            default: true
+          coverage_threshold:
+            type: number
+            default: 0.8
+      jarvis_monitor:
+        type: object
+        properties:
+          image:
+            type: string
+            default: jarvis-ai/monitor:latest
+          metrics_collection:
+            type: boolean
+            default: true
+          log_aggregation:
+            type: boolean
+            default: true
+          anomaly_detection:
+            type: boolean
+            default: true
+          alert_thresholds:
+            type: object
+  deployment_strategy:
+    type: object
+    required: false
+    properties:
+      strategy:
+        type: string
+        enum: [rolling, blue_green, canary]
+        default: rolling
+      rollback_enabled:
+        type: boolean
+        default: true
+      health_check_grace_period:
+        type: integer
+        default: 30
+      max_unavailable:
+        type: string
+        default: 25%
+      max_surge:
+        type: string
+        default: 25%
+      pre_deployment_tests:
+        type: boolean
+        default: true
+  code_modification:
+    type: object
+    required: false
+    properties:
+      target_function:
+        type: string
+      modification_type:
+        type: string
+        enum: [enhancement, bug_fix, new_feature, optimization]
+      ai_autonomy_level:
+        type: string
+        enum: [supervised, semi_autonomous, fully_autonomous]
+        default: supervised
+      approval_required:
+        type: boolean
+        default: true
+      testing_required:
+        type: boolean
+        default: true
+      rollback_plan:
+        type: object
+  security_config:
+    type: object
+    required: false
+    properties:
+      container_isolation:
+        type: string
+        enum: [strict, moderate, minimal]
+        default: strict
+      network_policies:
+        type: boolean
+        default: true
+      resource_quotas:
+        type: boolean
+        default: true
+      secret_management:
+        type: boolean
+        default: true
+      vulnerability_scanning:
+        type: boolean
+        default: true
+      runtime_protection:
+        type: boolean
+        default: true
+  monitoring_config:
+    type: object
+    required: false
+    properties:
+      metrics_enabled:
+        type: boolean
+        default: true
+      distributed_tracing:
+        type: boolean
+        default: true
+      log_level:
+        type: string
+        enum: [debug, info, warning, error]
+        default: info
+      alert_channels:
+        type: array
+        default: [email, slack]
+      performance_monitoring:
+        type: boolean
+        default: true
+
+outputs:
+  deployment_status:
+    type: object
+    properties:
+      deployment_id:
+        type: string
+      status:
+        type: string
+      containers_deployed:
+        type: object
+      services_available:
+        type: array
+      deployment_time:
+        type: string
+      health_check_results:
+        type: object
+      resource_utilization:
+        type: object
+  container_health:
+    type: object
+    properties:
+      jarvis_core:
+        type: object
+      jarvis_functions:
+        type: array
+      jarvis_code:
+        type: object
+      jarvis_test:
+        type: object
+      jarvis_monitor:
+        type: object
+      overall_health_score:
+        type: number
+      critical_issues:
+        type: array
+  code_modification_result:
+    type: object
+    properties:
+      modification_successful:
+        type: boolean
+      changes_applied:
+        type: array
+      test_results:
+        type: object
+      performance_impact:
+        type: object
+      security_assessment:
+        type: object
+      rollback_available:
+        type: boolean
+      ai_confidence:
+        type: number
+  system_metrics:
+    type: object
+    properties:
+      resource_usage:
+        type: object
+      performance_metrics:
+        type: object
+      error_rates:
+        type: object
+      latency_statistics:
+        type: object
+      throughput:
+        type: object
+      cost_analysis:
+        type: object
+  security_report:
+    type: object
+    properties:
+      vulnerability_scan:
+        type: object
+      access_audit:
+        type: array
+      network_security:
+        type: object
+      container_integrity:
+        type: object
+      compliance_status:
+        type: object
+      security_score:
+        type: number
+  scaling_status:
+    type: object
+    properties:
+      current_replicas:
+        type: object
+      target_replicas:
+        type: object
+      scaling_events:
+        type: array
+      resource_requirements:
+        type: object
+      scaling_triggers:
+        type: array
+
+execution:
+  type: python_function
+  entry_point: manage_docker_orchestration
+  timeout: 1800
+  retry_attempts: 2
+  async_processing: true
+  distributed_execution: true
+
+container_architecture:
+  jarvis_core:
+    role: orchestration_hub
+    responsibilities:
+      - skill_loading
+      - task_distribution
+      - system_coordination
+      - user_interface
+      - security_enforcement
+    networking:
+      internal_api: 8000
+      external_api: 80
+      grpc_port: 50051
+    volumes:
+      - jarvis_data:/app/data
+      - jarvis_logs:/app/logs
+      - jarvis_config:/app/config
+    security:
+      read_only_root: true
+      non_root_user: true
+      capabilities_drop: [ALL]
+      seccomp_profile: runtime/default
+  jarvis_functions:
+    role: function_execution
+    responsibilities:
+      - skill_execution
+      - api_integrations
+      - data_processing
+      - external_communications
+    scaling:
+      horizontal_pod_autoscaler: true
+      cpu_threshold: 70
+      memory_threshold: 80
+      min_replicas: 2
+      max_replicas: 10
+    isolation:
+      namespace_isolation: true
+      network_policies: true
+      resource_quotas: true
+      pod_security_policies: true
+  jarvis_code:
+    role: autonomous_development
+    responsibilities:
+      - code_generation
+      - code_analysis
+      - claude_integration
+      - git_operations
+      - ci_cd_pipeline
+    development_tools:
+      - claude_code_api
+      - git
+      - docker
+      - pytest
+      - mypy
+      - black
+      - bandit
+    workspace:
+      isolated_filesystem: true
+      temporary_workspaces: true
+      code_sandboxing: true
+      version_control: true
+  jarvis_test:
+    role: quality_assurance
+    responsibilities:
+      - automated_testing
+      - security_scanning
+      - performance_testing
+      - integration_testing
+      - regression_testing
+    testing_pipeline:
+      unit_tests: pytest
+      integration_tests: custom_framework
+      security_tests: bandit_sonarqube
+      performance_tests: locust
+      load_tests: artillery
+  jarvis_monitor:
+    role: observability
+    responsibilities:
+      - metrics_collection
+      - log_aggregation
+      - anomaly_detection
+      - alerting
+      - dashboard_visualization
+    monitoring_stack:
+      metrics: prometheus
+      logging: fluentd_elasticsearch
+      tracing: jaeger
+      visualization: grafana
+      alerting: alertmanager
+
+self_modification_workflow:
+  trigger_conditions:
+    - user_request
+    - performance_degradation
+    - error_pattern_detection
+    - optimization_opportunity
+    - new_requirement_detection
+  development_pipeline:
+    step_1:
+      name: analysis
+      container: jarvis_code
+      actions: [analyze_current_code, identify_requirements, plan_modifications]
+    step_2:
+      name: code_generation
+      container: jarvis_code
+      actions: [generate_code_with_claude, validate_syntax, check_dependencies]
+    step_3:
+      name: testing
+      container: jarvis_test
+      actions: [run_unit_tests, security_scan, performance_test, integration_test]
+    step_4:
+      name: staging_deployment
+      container: jarvis_functions
+      actions: [deploy_to_staging, smoke_tests, monitoring_validation]
+    step_5:
+      name: production_deployment
+      container: jarvis_functions
+      actions: [blue_green_deployment, health_checks, rollback_if_needed]
+  safety_mechanisms:
+    approval_gates: true
+    automated_rollback: true
+    circuit_breakers: true
+    resource_limits: true
+    sandbox_testing: true
+
+networking:
+  service_mesh:
+    enabled: true
+    technology: istio
+    traffic_management: true
+    security_policies: true
+    observability: true
+  load_balancing:
+    algorithm: round_robin
+    health_checks: true
+    sticky_sessions: false
+    circuit_breaker: true
+  api_gateway:
+    enabled: true
+    rate_limiting: true
+    authentication: true
+    request_routing: true
+    response_caching: true
+
+data_management:
+  persistent_storage:
+    type: pvc
+    storage_class: fast_ssd
+    backup_strategy: daily_snapshots
+    encryption: true
+  shared_cache:
+    technology: redis_cluster
+    high_availability: true
+    data_persistence: true
+    memory_optimization: true
+  database:
+    type: postgresql_cluster
+    replication: true
+    backup_retention: 30_days
+    encryption_at_rest: true
+
+security_framework:
+  container_security:
+    image_scanning: true
+    runtime_protection: true
+    network_segmentation: true
+    secret_management: true
+  access_control:
+    rbac: true
+    pod_security_policies: true
+    network_policies: true
+    admission_controllers: true
+  compliance:
+    cis_benchmarks: true
+    gdpr_compliance: true
+    audit_logging: true
+    vulnerability_management: true
+
+disaster_recovery:
+  backup_strategy:
+    automated_backups: true
+    cross_region_replication: true
+    point_in_time_recovery: true
+    backup_testing: true
+  high_availability:
+    multi_zone_deployment: true
+    auto_failover: true
+    load_balancing: true
+    data_replication: true
+  recovery_procedures:
+    automated_recovery: true
+    manual_intervention_points: true
+    recovery_time_objective: 15_minutes
+    recovery_point_objective: 5_minutes
+
+error_handling:
+  container_failure: Automatic restart with exponential backoff and health checks
+  deployment_failure: Automatic rollback to previous stable version
+  resource_exhaustion: Auto-scaling with resource limits and node expansion
+  network_partition: Circuit breaker pattern with graceful degradation
+  code_modification_failure: Revert to last known good state and alert administrators
+  security_breach: Immediate container isolation and forensic data collection
+
+performance_optimization:
+  resource_management: true
+  auto_scaling: true
+  caching_strategies: true
+  connection_pooling: true
+  code_optimization: true

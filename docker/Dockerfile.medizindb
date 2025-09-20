@@ -1,0 +1,61 @@
+# MedizinDB - Medical Records & Health Data Database
+FROM postgres:15-alpine
+
+# Install additional extensions for medical data
+RUN apk add --no-cache \
+    postgresql-contrib \
+    postgresql-dev \
+    python3 \
+    py3-pip \
+    curl \
+    openssl
+
+# Install Python dependencies for medical data processing
+RUN pip3 install --no-cache-dir --break-system-packages \
+    psycopg2-binary \
+    alembic \
+    sqlalchemy \
+    cryptography \
+    fhir-resources \
+    hl7
+
+# Copy database initialization scripts
+COPY database/medizindb/init/ /docker-entrypoint-initdb.d/
+COPY database/medizindb/migrations/ /opt/migrations/
+COPY database/medizindb/backup/ /opt/backup/
+
+# Copy custom configuration for medical data compliance
+COPY database/medizindb/postgresql.conf /etc/postgresql/postgresql.conf
+COPY database/medizindb/pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Create encrypted backup script for medical data
+COPY database/medizindb/encrypted-backup.sh /usr/local/bin/
+COPY database/medizindb/medical-compliance.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/encrypted-backup.sh && \
+    chmod +x /usr/local/bin/medical-compliance.py
+
+# Set up encrypted daily backups (GDPR/HIPAA compliant)
+RUN mkdir -p /etc/cron.d && \
+    echo "0 3 * * * /usr/local/bin/encrypted-backup.sh" > /etc/cron.d/medical-backup
+
+# Environment variables for medical data security
+ENV POSTGRES_DB=medizindb
+ENV POSTGRES_USER=jarvis_medical
+ENV POSTGRES_PASSWORD_FILE=/run/secrets/postgres_medical_password
+ENV PGDATA=/var/lib/postgresql/data/medizindb
+ENV MEDICAL_ENCRYPTION_KEY_FILE=/run/secrets/medical_encryption_key
+ENV GDPR_COMPLIANCE=true
+
+# Enhanced health check for medical data
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && \
+        python3 /usr/local/bin/medical-compliance.py --check || exit 1
+
+EXPOSE 5434
+
+# Secure entrypoint for medical data
+COPY database/medizindb/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

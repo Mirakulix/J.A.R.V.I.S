@@ -1,0 +1,45 @@
+# JarvisConnector - External Service Synchronization
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    cron \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements-connector.txt .
+RUN pip install --no-cache-dir -r requirements-connector.txt
+
+# Copy source code
+COPY jarvis_connector/ ./jarvis_connector/
+COPY shared/ ./shared/
+COPY skills/ ./skills/
+
+# Copy cron jobs for scheduled sync
+COPY docker/crontab /etc/cron.d/jarvis-sync
+RUN chmod 0644 /etc/cron.d/jarvis-sync && \
+    crontab /etc/cron.d/jarvis-sync
+
+# Create non-root user
+RUN useradd -m -u 1000 jarvis && \
+    chown -R jarvis:jarvis /app
+USER jarvis
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8001/health || exit 1
+
+EXPOSE 8001
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV SYNC_INTERVAL=300
+ENV MAX_RETRY_ATTEMPTS=3
+
+# Start cron and main application
+CMD ["sh", "-c", "cron && python -m jarvis_connector.main"]

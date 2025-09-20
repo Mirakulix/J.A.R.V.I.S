@@ -1,0 +1,57 @@
+# JarvisFunctions - Scalable Function Execution Sandbox
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies for various skills
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    git \
+    tesseract-ocr \
+    tesseract-ocr-deu \
+    ffmpeg \
+    libgl1-mesa-dri \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements-functions.txt .
+RUN pip install --no-cache-dir -r requirements-functions.txt
+
+# Copy source code
+COPY jarvis_functions/ ./jarvis_functions/
+COPY shared/ ./shared/
+COPY skills/ ./skills/
+
+# Create sandbox directories
+RUN mkdir -p /app/sandbox /app/temp /app/cache
+
+# Create non-root user with restricted permissions
+RUN useradd -m -u 1000 jarvis && \
+    chown -R jarvis:jarvis /app && \
+    chmod 755 /app/sandbox
+USER jarvis
+
+# Security: Read-only root filesystem
+# VOLUME ["/app/sandbox", "/app/temp", "/app/cache"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
+
+EXPOSE 8002
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV SANDBOX_MODE=strict
+ENV FUNCTION_TIMEOUT=300
+ENV MAX_MEMORY_MB=1024
+
+# Resource limits will be set by orchestrator
+CMD ["python", "-m", "jarvis_functions.main"]

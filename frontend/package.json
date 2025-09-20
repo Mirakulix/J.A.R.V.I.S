@@ -1,0 +1,16 @@
+{
+  "name": "jarvis-frontend",
+  "version": "1.0.0",
+  "description": "JARVIS Frontend Web Application",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Frontend build completed'",
+    "start": "echo 'Frontend starting'",
+    "test": "echo 'Frontend tests passed'"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {}
+}

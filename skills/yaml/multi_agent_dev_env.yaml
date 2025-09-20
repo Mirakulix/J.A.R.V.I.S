@@ -1,0 +1,392 @@
+skill_id: multi_agent_dev_env
+name: Advanced Multi-Agent Development Environment
+description: Creates and manages specialized AI agent clones with unique personalities, expertise, and hierarchical relationships for collaborative software development and project management
+category: complex
+version: 1.0.0
+dependencies:
+  - openai
+  - anthropic
+  - autogen
+  - langchain
+  - chromadb
+  - docker
+  - kubernetes
+  - redis
+  - celery
+  - asyncio
+
+api_requirements:
+  openai_api:
+    provider: openai
+    api_key_env_var: OPENAI_API_KEY
+    models: [gpt-4, gpt-3.5-turbo, gpt-4-vision-preview]
+    rate_limit: high_tier
+  anthropic_api:
+    provider: anthropic
+    api_key_env_var: ANTHROPIC_API_KEY
+    models: [claude-3-opus, claude-3-sonnet, claude-3-haiku]
+  claude_code_api:
+    provider: anthropic
+    api_key_env_var: CLAUDE_CODE_API_KEY
+    endpoint: https://api.anthropic.com/v1/code
+    features: [code_generation, debugging, refactoring]
+  github_api:
+    provider: github
+    api_key_env_var: GITHUB_TOKEN
+    organization: optional
+    repositories: auto_detect
+  vector_database:
+    provider: chroma
+    host_env_var: CHROMA_HOST
+    port_env_var: CHROMA_PORT
+    collection_prefix: jarvis_agents
+  container_orchestration:
+    provider: docker
+    socket_path: /var/run/docker.sock
+    registry: optional
+
+inputs:
+  agent_management:
+    type: object
+    required: true
+    properties:
+      action:
+        type: string
+        enum: [create_agent, modify_agent, deploy_team, execute_project, monitor_agents, terminate_agent]
+      agent_count:
+        type: integer
+        default: 1
+        min: 1
+        max: 20
+      team_composition:
+        type: string
+        enum: [development, research, testing, devops, custom]
+      collaboration_mode:
+        type: string
+        enum: [hierarchical, peer_to_peer, swarm, hybrid]
+  agent_definitions:
+    type: array
+    required: false
+    items:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          required: true
+        base_personality:
+          type: string
+          enum: [analytical, creative, systematic, innovative, pragmatic]
+        expertise_domains:
+          type: array
+          items:
+            type: string
+        programming_languages:
+          type: array
+          items:
+            type: string
+        frameworks:
+          type: array
+          items:
+            type: string
+        role:
+          type: string
+          enum: [architect, developer, tester, reviewer, devops, pm, researcher]
+        hierarchy_level:
+          type: integer
+          min: 1
+          max: 10
+        communication_style:
+          type: string
+          enum: [formal, casual, technical, collaborative]
+        decision_authority:
+          type: string
+          enum: [none, local, team, project]
+        learning_preferences:
+          type: object
+        conflict_resolution:
+          type: string
+          enum: [diplomatic, assertive, collaborative, escalating]
+  project_specification:
+    type: object
+    required: false
+    properties:
+      project_type:
+        type: string
+        enum: [web_app, mobile_app, api, desktop_app, ml_model, data_pipeline, infrastructure]
+      requirements:
+        type: string
+      constraints:
+        type: object
+      timeline:
+        type: object
+      quality_standards:
+        type: object
+      architecture_preferences:
+        type: array
+      technology_stack:
+        type: object
+      testing_requirements:
+        type: object
+      deployment_target:
+        type: string
+  collaboration_rules:
+    type: object
+    required: false
+    properties:
+      code_review_required:
+        type: boolean
+        default: true
+      minimum_reviewers:
+        type: integer
+        default: 2
+      consensus_threshold:
+        type: number
+        default: 0.7
+      escalation_rules:
+        type: array
+      conflict_resolution_protocol:
+        type: object
+      knowledge_sharing:
+        type: boolean
+        default: true
+      peer_learning:
+        type: boolean
+        default: true
+  infrastructure_config:
+    type: object
+    required: false
+    properties:
+      container_isolation:
+        type: boolean
+        default: true
+      resource_limits:
+        type: object
+      network_topology:
+        type: string
+        enum: [mesh, hub_spoke, hybrid]
+      data_persistence:
+        type: boolean
+        default: true
+      backup_strategy:
+        type: object
+      monitoring_level:
+        type: string
+        enum: [basic, detailed, comprehensive]
+  claude_code_integration:
+    type: object
+    required: false
+    properties:
+      self_modification_enabled:
+        type: boolean
+        default: false
+      error_correction_mode:
+        type: string
+        enum: [manual, semi_automatic, fully_automatic]
+      code_generation_oversight:
+        type: boolean
+        default: true
+      type_checking_level:
+        type: string
+        enum: [basic, strict, comprehensive]
+      testing_automation:
+        type: boolean
+        default: true
+
+outputs:
+  agent_deployment:
+    type: object
+    properties:
+      deployed_agents:
+        type: array
+      team_hierarchy:
+        type: object
+      communication_channels:
+        type: array
+      resource_allocation:
+        type: object
+      deployment_status:
+        type: string
+      estimated_capacity:
+        type: object
+  project_progress:
+    type: object
+    properties:
+      overall_progress:
+        type: number
+        min: 0
+        max: 100
+      milestone_status:
+        type: array
+      active_tasks:
+        type: array
+      completed_tasks:
+        type: array
+      blockers:
+        type: array
+      quality_metrics:
+        type: object
+      timeline_adherence:
+        type: number
+  agent_interactions:
+    type: array
+    items:
+      type: object
+      properties:
+        interaction_id:
+          type: string
+        participants:
+          type: array
+        interaction_type:
+          type: string
+        outcome:
+          type: string
+        decisions_made:
+          type: array
+        knowledge_exchanged:
+          type: array
+        conflicts_resolved:
+          type: array
+  code_artifacts:
+    type: object
+    properties:
+      generated_code:
+        type: object
+      test_coverage:
+        type: number
+      code_quality_score:
+        type: number
+      documentation:
+        type: object
+      architecture_diagrams:
+        type: array
+      deployment_configs:
+        type: object
+  learning_outcomes:
+    type: object
+    properties:
+      knowledge_base_updates:
+        type: array
+      pattern_discoveries:
+        type: array
+      best_practices_identified:
+        type: array
+      agent_skill_improvements:
+        type: object
+      collaborative_efficiency:
+        type: number
+  system_health:
+    type: object
+    properties:
+      agent_status:
+        type: object
+      resource_utilization:
+        type: object
+      performance_metrics:
+        type: object
+      error_logs:
+        type: array
+      system_recommendations:
+        type: array
+  security_audit:
+    type: object
+    properties:
+      access_control_status:
+        type: string
+      data_isolation:
+        type: boolean
+      communication_security:
+        type: object
+      vulnerability_scan:
+        type: array
+      compliance_status:
+        type: object
+
+execution:
+  type: python_function
+  entry_point: manage_multi_agent_environment
+  timeout: 3600
+  retry_attempts: 2
+  async_processing: true
+  distributed_execution: true
+  auto_scaling: true
+
+agent_architecture:
+  base_agent_template:
+    memory_system: hierarchical
+    reasoning_engine: chain_of_thought
+    tool_access: sandboxed
+    learning_mechanism: continuous
+    personality_engine: dynamic
+  specialization_modules:
+    code_generation: true
+    testing: true
+    debugging: true
+    architecture_design: true
+    project_management: true
+    documentation: true
+  communication_protocols:
+    inter_agent_messaging: structured
+    knowledge_sharing: semantic
+    conflict_resolution: negotiation_based
+    decision_making: consensus_driven
+
+claude_code_capabilities:
+  self_introspection:
+    code_analysis: true
+    performance_profiling: true
+    error_detection: true
+    optimization_suggestions: true
+  self_modification:
+    skill_enhancement: true
+    bug_fixing: true
+    feature_addition: true
+    safety_constraints: true
+  quality_assurance:
+    type_checking: true
+    unit_testing: true
+    integration_testing: true
+    security_scanning: true
+
+knowledge_management:
+  vector_database: true
+  semantic_search: true
+  knowledge_graphs: true
+  experience_replay: true
+  cross_agent_learning: true
+
+orchestration:
+  task_distribution: intelligent
+  load_balancing: true
+  fault_tolerance: true
+  auto_recovery: true
+  scaling_policies: dynamic
+
+monitoring_observability:
+  real_time_metrics: true
+  conversation_logging: true
+  performance_analytics: true
+  behavioral_analysis: true
+  predictive_insights: true
+
+security_privacy:
+  agent_isolation: true
+  encrypted_communication: true
+  access_control: rbac
+  audit_logging: true
+  data_anonymization: true
+  secure_code_execution: true
+
+error_handling:
+  agent_failure: Graceful degradation with backup agents and task redistribution
+  communication_breakdown: Implement retry mechanisms and alternative communication channels
+  resource_exhaustion: Dynamic resource allocation and priority-based task scheduling
+  code_generation_errors: Multi-agent code review and Claude Code validation
+  consensus_deadlock: Escalation to higher hierarchy level or external arbitration
+  security_breach: Immediate isolation, forensic analysis, and system restoration
+
+compliance_ethics:
+  ai_safety_guidelines: true
+  bias_detection: true
+  fairness_monitoring: true
+  transparency_reporting: true
+  human_oversight: true

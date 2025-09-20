@@ -1,0 +1,61 @@
+# JarvisCode - Autonomous Development with Claude Code
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    git \
+    docker.io \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements-code.txt .
+RUN pip install --no-cache-dir -r requirements-code.txt
+
+# Install code analysis tools
+RUN pip install --no-cache-dir \
+    black \
+    pylint \
+    mypy \
+    bandit \
+    pytest \
+    pytest-cov \
+    flake8 \
+    isort
+
+# Copy source code
+COPY jarvis_code/ ./jarvis_code/
+COPY shared/ ./shared/
+COPY skills/ ./skills/
+
+# Create development workspace
+RUN mkdir -p /app/workspace /app/git_repos /app/builds
+
+# Create non-root user
+RUN useradd -m -u 1000 jarvis && \
+    chown -R jarvis:jarvis /app
+USER jarvis
+
+# Configure Git
+RUN git config --global user.name "JARVIS Code AI" && \
+    git config --global user.email "jarvis@ai.local"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8003/health || exit 1
+
+EXPOSE 8003
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV CLAUDE_CODE_ENABLED=true
+ENV AUTO_COMMIT=false
+ENV CODE_REVIEW_REQUIRED=true
+ENV WORKSPACE_PATH=/app/workspace
+
+CMD ["python", "-m", "jarvis_code.main"]

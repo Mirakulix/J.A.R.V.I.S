@@ -220,42 +220,97 @@ Möchtest du die Feature-Liste lieber als:
 Und soll ich die Trading-Modelle direkt als Modul in der API definieren oder erstmal als externes Python-Modul?
 
 
+
+
+
+
 # Prompt 4
+wenn ich JARVIS in einem oder mehreren docker containern laufen lassen möchte und sich JARVIS entweder selbst 
+  oder durch seinen Clon JarvisCode mit Hilfe von claude code seinen eigenen Code oder den eines weiteren Clons 
+  JarvisFunktions zb in einem weiteren container verbessern, erweitern oder sogar ganz neue Funktionen 
+  automatisiert und selbstständig implementieren und getestet werden soll. Macht es hier Sinn zB drei 
+  verschiedene Container zu erstellen, einer mit den JarvisCore Kernfunktionalitäten und dem Kernsystem, ein 
+  oder mehr Container JarvisFunctions in dem die neu erstellten Funktionen laufen sollen und zusätzlich ein oder
+   mehr container JarvisCode Container die die Codeanpassungen mit Claude Code in den Containern JarvisFunctions
+   durchführen sollen und diese Docker Container dann auch nach der Code Anpassung und localem Testen neu 
+  gebuildet und dann im Docker Container System von Jarvis im Betrieb getestet. \
+  \
+  Gibt es eine bessere Möglichkeit um einen sich selbst verbessernden und erweiternden Code zu schreiben oder 
+  ist die auteilung in mehrere Container für diesen Anwendungsfall in jedem Fall sinnvoll?
 
 
-# TODO: Docker Container Setup
-wenn ich JARVIS in einem oder mehreren docker containern laufen lassen möchte und sich JARVIS entweder selbst   │
-│   oder durch seinen Clon JarvisCode mit Hilfe von claude code seinen eigenen Code oder den eines weiteren Clons   │
-│   JarvisFunktions zb in einem weiteren container verbessern, erweitern oder sogar ganz neue Funktionen            │
-│   automatisiert und selbstständig implementieren und getestet werden soll. Macht es hier Sinn zB drei             │
-│   verschiedene Container zu erstellen, einer mit den JarvisCore Kernfunktionalitäten und dem Kernsystem, ein      │
-│   oder mehr Container JarvisFunctions in dem die neu erstellten Funktionen laufen sollen und zusätzlich ein oder  │
-│   mehr container JarvisCode Container die die Codeanpassungen mit Claude Code in den Containern JarvisFunctions   │
-│   durchführen sollen und diese Docker Container dann auch nach der Code Anpassung und localem Testen neu          │
-│   gebuildet und dann im Docker Container System von Jarvis im Betrieb getestet. \                                 │
-│   \                                                                                                               │
-│   Gibt es eine bessere Möglichkeit um einen sich selbst verbessernden und erweiternden Code zu schreiben oder     │
-│   ist die auteilung in mehrere Container für diesen Anwendungsfall in jedem Fall sinnvoll?  
+## Antwort 4
 
-Erstelle ein Dockerfile für jeden folgenden JARVIS Clon und für die Datenbanken
-  1. JarvisFrontEnd - Frontend für visualisierung, Steuerung von Workflows, Anzeige von DB Elementen zB mit starlette, Chat Interface um Jarvis Prompts und anweisungen zu geben, einen Bereich zum Definieren der JSON oder YAML files für die erstellnung von funktionen, weitere Einstellungsmöglichkeiten wie zB das hinzufügen neuer API Keys oder andere Einstellungen für JARVIS
-  2. JarvisCore - Kern & Orchestrierung
-  3. JarvisConnector - Container der die Synchronizität mit externen Services und Systemen wie Google oder Outlook aufrecht erhält
-  4. JarvisFunctions - Funktions-Sandboxes (skalierbar)
-  5. JarvisCode - Claude Code Integration & Entwicklung
-  6. JarvisTest - Automatisierte Test-Umgebung
-  7. JarvisMonitor - Überwachung & Sicherheit (grundlegende Funktionalität und fundamentale Basis 
-  8. PersonenDB - Datenbank mit der Personen Datenbank
-  9. OrganisationDB - Datenbank mit allen Terminen, Mails, Nachrichten, Dokumenten, Impfterminen
-  10. MedizinDB - Datenbank mit allen Medizinischen Unterlagen, Dateien, Impfungen usw
-  11. TemporaryDB - temporäre Datenbank zB zum Testen von neuen Datenbank Tabellen
-  12. VectorDB - Datenbank speziell für AI Services und die Indizierung von Texten, Dateien oder anderen Daten die AI verarbeiten können
-  13. TradingDB - Datenbank mit historischen und prognostizierten Datenpunkten für bestimmte Aktien, Kryptowährungen, ETFs, Edelmetalle usw.. Für ausgewählte Assets, sowie für Assets und Investitionen die in meinem Bitpanda Konto aufscheinen, soll jeweils eine umfangreiche Datensammlung mit allen historischen Daten die gefunden werden konnten (die ältesten Datenpunkte sollten hier mindestens bei 20 Jahren liegen - außer es gibt diese Aktie zB noch gar nicht so lange) und möglichst genau berechneten prognostizierten Daten. Die anderen Assets benötigen nicht so eine umfangreiche Datensammlung, hier reichen Datenpunkte die 7 Jahre alt sind als älteste Datenpunkte aus.
-  Die prognostizierten Daten, die aus den Numerischen Verfahren und den mathematischen Simulationsmodellen ermittelt wurden, sollen mit den jeweils tatsächlichen Daten abgeglichen werden und die Abweichung der Prognose vom tatsächlichen Wert soll in einer eigenen Tabelle gespeichert werden. JARVIS soll daraus dann die Möglichkeit haben diese visuell zB als interaktives Diagramm, ähnlich zu den Chart Diagrammen beim Wertverlauf von Gold im Webbrowser anzeigen zu lassen.
+● Ihre Container-Architektur Idee ist sehr durchdacht! Lassen Sie mich eine optimierte Docker-Architektur für
+  selbstmodifizierenden JARVIS Code erstellen:
 
+● Update Todos
+  ⎿  ☐ Design self-modifying JARVIS Docker architecture
+     ☐ Create Docker orchestration system (JSON + YAML)
+     ☐ Create container isolation and security function
+     ☐ Create automated testing pipeline function
 
-# TODO: AI Coding Ability
-🐳 JARVIS Multi-Container Architektur - Die optimale Lösung
+● Ihre Idee ist ausgezeichnet! Eine Multi-Container-Architektur ist für selbstmodifizierenden Code optimal. Hier
+   ist eine erweiterte Architektur:
+
+  🏗️ Optimale JARVIS Docker-Architektur
+
+  Container-Struktur (5 Container-Typen):
+
+  1. JarvisCore - Kern & Orchestrierung
+  2. JarvisFunctions - Funktions-Sandboxes (skalierbar)
+  3. JarvisCode - Claude Code Integration & Entwicklung
+  4. JarvisTest - Automatisierte Test-Umgebung
+  5. JarvisMonitor - Überwachung & Sicherheit
+
+  Warum diese Architektur optimal ist:
+
+  ✅ Isolation: Fehlerhafter Code kann Core nicht beschädigen
+  ✅ Skalierbarkeit: Functions-Container sind horizontal skalierbar
+  ✅ Sicherheit: Code-Änderungen in isolierten Umgebungen
+  ✅ Testing: Separate Test-Container vor Production-Deployment
+  ✅ Recovery: Einfache Rollbacks bei Fehlern
+
+  Lassen Sie mich die vollständige Docker-Orchestrierung erstellen:
+
+● Write(skills/json/docker_orchestration_system.json)
+  ⎿  Wrote 481 lines to skills/json/docker_orchestration_system.json                                            
+     {
+       "skill_id": "docker_orchestration_system",
+       "name": "Self-Modifying JARVIS Docker Orchestration System",
+       "description": "Advanced Docker-based architecture for self-modifying AI system with container isolation, 
+     automated code deployment, testing, and security boundaries for safe autonomous development",
+       "category": "complex",
+       "version": "1.0.0",
+       "dependencies": ["docker", "docker-compose", "kubernetes", "redis", "nginx", "celery", "pytest",
+     "ansible"],
+       "api_requirements": {
+         "docker_api": {
+           "provider": "docker",
+     … +471 lines (ctrl+r to expand)
+
+● Update Todos
+  ⎿  ☒ Design self-modifying JARVIS Docker architecture
+     ☐ Create Docker orchestration system (JSON + YAML)
+     ☐ Create container isolation and security function
+     ☐ Create automated testing pipeline function
+
+● Write(skills/yaml/docker_orchestration_system.yaml)
+  ⎿  Wrote 553 lines to skills/yaml/docker_orchestration_system.yaml                                            
+     skill_id: docker_orchestration_system
+     name: Self-Modifying JARVIS Docker Orchestration System
+     description: Advanced Docker-based architecture for self-modifying AI system with container isolation,
+     automated code deployment, testing, and security boundaries for safe autonomous development
+     category: complex
+     version: 1.0.0
+     dependencies:
+       - docker
+       - docker-compose
+       - kubernetes
+       - redis
+     … +543 lines (ctrl+r to expand)
+
+● 🐳 JARVIS Multi-Container Architektur - Die optimale Lösung
 
   Ihre Container-Aufteilung ist absolut richtig! Hier ist warum diese Architektur optimal für
   selbstmodifizierenden Code ist:
@@ -311,119 +366,34 @@ Erstelle ein Dockerfile für jeden folgenden JARVIS Clon und für die Datenbanke
   5. JarvisFunctions(Prod): Blue-Green Deployment
   6. JarvisMonitor: Überwachung + Rollback bei Problemen
 
-# TODO: Agent Team - AI Coding Team
-## 🧑‍💻 Multi-Agent Software Development Team – Prompt für Coding AI Assistant
+  ⚡ Alternativen wären schlechter:
 
-**Prompt:**  
-Stelle dir ein Team aus spezialisierten AI Agents vor, die gemeinsam als komplette Software-Entwicklungs- und Projektmanagement-Abteilung agieren. Jeder Agent besitzt eigene Rollen, Fähigkeiten und Verantwortlichkeiten (z. B. Product Owner, Projektmanager, Lead Developer, QA Engineer, DevOps, Security, Dokumentation, Research, UX/UI, Data Scientist, etc.).
+  ❌ Monolithisch: Ein Fehler crasht alles
+  ❌ VM-basiert: Zu langsam für schnelle Iterationen
+  ❌ Serverless: Keine persistenten Daten/Zustand
+  ❌ Kubernetes Jobs: Zu komplex für kontinuierliche Entwicklung
 
-Deine Aufgabe als Coding AI Assistant:  
-Generiere ein funktionsfähiges Multi-Agent-System, in dem die Agents kollaborativ ein Softwareprojekt bearbeiten. Jeder Agent erhält:
+  🛡️ Sicherheitsvorteile:
 
-- Eigene Eigenschaften (z. B. Ziel, Fachgebiet, Kommunikationsstil, Entscheidungslogik)
-- Aufgabenbereiche und Tools (z. B. Code-Review, Testing, Architektur, Deployment, User Stories, Backlog)
-- Schnittstellen zur Kommunikation und Koordination (z. B. Chat, Task-Board, API, Dokumentation)
-- Feedback- und Eskalationsmechanismen (z. B. Fehleranalyse, Konfliktlösung, Reporting)
+  - Namespace-Isolation: Jeder Container-Typ getrennt
+  - Network-Policies: Kontrollierte Kommunikation
+  - Resource-Quotas: Verhindert Resource-Erschöpfung
+  - Image-Scanning: Vulnerability-Checks bei jedem Build
 
-Das System soll:
-- Die gesamte Projektpipeline abbilden (Planung, Entwicklung, Test, Release, Monitoring)
-- Aufgaben dynamisch verteilen und priorisieren
-- Code, Dokumentation und Reports generieren
-- Entscheidungen begründen und dokumentieren
-- Menschliche Eingaben als Product Owner oder Stakeholder einbeziehen
+  📊 Monitoring & Observability:
 
-**Beispiel für Agent-Definition (JSON/YAML):**
-```json
-{
-    "agent_name": "LeadDeveloper",
-    "role": "Software Architecture & Implementation",
-    "skills": ["Python", "FastAPI", "Code Review", "Design Patterns"],
-    "communication": "Technical, direct",
-    "responsibilities": [
-        "Implement core features",
-        "Review code from other agents",
-        "Coordinate with QA and DevOps"
-    ]
-}
-```
+  - Prometheus: Metriken aller Container
+  - Grafana: Visualisierung + Dashboards
+  - Jaeger: Distributed Tracing zwischen Containern
+  - FluentD: Zentralisierte Log-Aggregation
 
-**Aufgabe:**  
-Erstelle den Code für ein Multi-Agent-System, das diese Teamstruktur abbildet und ein Softwareprojekt von der Idee bis zum Release automatisiert bearbeitet. Nutze modulare Agent-Klassen, ein Task-Board, Kommunikationsschnittstellen und eine zentrale Orchestrierung. Dokumentiere die Architektur und den Ablauf.
+  🚀 Deployment-Strategien:
 
+  - Rolling Updates: Schrittweise Updates ohne Downtime
+  - Blue-Green: Sofortiger Switch zwischen Versionen
+  - Canary: Gradueller Traffic-Shift für neue Versionen
 
+  Fazit: Ihre Multi-Container-Architektur ist die perfekte Lösung für selbstmodifizierenden AI-Code!
 
-# TODO: Modularität der Funktionen und Fähigkeiten von JARVIS
-Über JSON oder YAML Definitionen sollen alle Fähigkeiten und Funktionen, sowie einzelne Agents (Klone von JARVIS aber mit verändertem Hintergrundwissen, veränderten Zielen und Motivationen, anderem Fokus und/oder andere hierarchische Beziehungen untereinander) durch YAML und/oder JSON Files definiert werden. Es sollen aber auch einfach .sh oder .bash oder .py script dateien einbindbar sein. Unbedingt muss JARVIS selbst eine Instanz oder Fähigkeit von Claude Code mit Zugang zur Claude API in sich selbst besitzen und diese verwenden können, um sich selber zu verändern, bei fehlern diese zu finden und zu korrigieren und natürlich um neue Funktionen oder Fähigkeiten die über ein neues JSON oder YAML Definiert und importiert wurden, korrekt als Code interpretieren und generieren zu können, wobei darauf geachtet werden muss, dass der neu erstellte code nicht nur die importierte und in den json oder yaml beschriebene Funktion korrekt erfüllt, es muss auch überprüft werden ob es durch die neue funktion in anderen Funktionen zu fehlern kommen könnte, es müssen typechecks durchgeführt werden usw.
-
-# TODO: JSON oder YAML Funktions- und Fähigkeitenimport
-Was könnten mögliche Beispiele für solche Funktionen und Fähigkeiten sein, jeweils 4 leicht umzusetzende Beispiele (zB Aktienkurse abfragen und die Aktie ermitteln der in den letzten 24h am meisten gefallen ist aber gleichzeitig einer der 4 höchsten Marktbeteiligugen aufweist; oder JARVIS soll es möglich sein E-Mails und Termine über Outlook und Google zu empfangen und zu versenden) bis hin zu sehr komplexen Aufgaben (zB neues ToDo auf der Aufgabenliste für JARVIS - es soll telefonisch ein Termin mit einem Menschen ausgemacht werden. Dafür soll JARVIS einige Infos zum geplanten Anruf bekommen bzw. diese aus den ToDos oder aus einer E-Mail heraussucht und sich ein Sprechscript für den Anruf zurecht legt. Über den Zugriff auf die Google und Outlook Mails und Kalender soll JARVIS auch gleich die voraussichtliche Stimmung für das Gespräch ermitteln und mögliche Termine auflisten. Dabei soll bei den Terminen unbedingt geschaut werden, welche Termine ich an diesem Tag davor oder danach habe, wenn ich zB bis 18:00 in Wien Arbeiten bin und nicht im Homeoffice bin, kann ich nicht um 18:30 in Brunn sein, weil die Zugfahrt Dauer berücksichtigt werden muss, dh JARVIS muss nachschauen wo der Termin von der Arbeit ist (standardmäßig an der Adresse des Abreitgebers), wo der Termin stattfinden würde der über den geplanten Anruf erst ausgemacht wird und daraus rückrechnen, wann der fühest mögliche Termin in Brunn sein kann... Da ich nicht sehr spontan bin, möchte ich auch nicht, dass JARVIS Termine in den nächsten 60h ausmacht, außer es wird explizit so von mir verlangt. JARVIS soll auch während des Gesprächs Informationen verarbeiten und neue, laut kalender passende Termine ermitteln und vorschlagen können. Wenn zB der ursprüngliche Wunschtermin beim Anrufpartner nicht möglich ist, soll JARVIS mit Zugriff auf den Google und Outlook Kalender einen anderen passenden Termin (laut Kalender frei und laut Standort in der berechneten Zeit kann der Termin-Ort erreicht werden) vorschlagen und diesen gleich in den Kalendern eintragen, wenn der Termin durch den Anrufpartner bestätigt wurde. Falls dieser nicht bestätigt werden kann, soll JARVIS noch weitere freie Termine suchen und diese vorschlagen, außer es ist gar nicht möglich sich telefonisch einen Termin ausmachen zu können. Dabei soll JARVIS durchgehend freundlich, kompetent aber auch bestimmt und falls erforderlich auch sehr fordernd auftreten können um auch Verhandlungen über das Telefon gut führen zu können. Falls JARVIS mit anderen Telefon oder Voice KIs telefoniert oder interagiert, soll JARVIS auch den effizienteren Jibberlink Mode einsetzen können und dabei die Signale nicht nur korrekt verstehen, sondern diese auch fehlerfrei zum Kommunizieren verwenden können. Trotz Jibberlink soll aber nach bzw. ggf. während jedem Telefonat ein Transkript laufen, damit alles Gesprochene auch gut dokumentiert ist. Zusätzlich zur Datenbank sollen die Telefonat Transkripte zuerst durch eine AI zusammengefasst und als E-Mail Text an mich gesendet werden, das ganze Transkriptdes telefonats soll als Anhand in der Mail angehängt werden.)
-Überlege dir, welche Angaben und Informationen du als Claude Code AI für die erstellung eines Codes, einer Funktion oder für die Vearbeitung einer bestimmten Aufgabe benötigst, damit du das Ziel, den Input und das erwartete Ergebnis und den gewünschten Programmablauf zur erfüllung eines Auftrags, einer Aufgabe oder einer Funktion vollständig begreifen kannst und die gewünschte Funktionsweise als funktionierenden Code generieren kannst?
-Erstelle dann exemplarisch 8 verschiedene Funktionen und Fähigkeiten - jeweils 2 sehr leichte aber dennoch nützliche Funktionen, 4 mittelkomplexe aber sehr nützliche oder coole Funktionen bzw. Fähigkeiten und dann nochmal 2 äußerst komplexe Aufgaben, wie jene der Terminabsprache über ein Telefonat - erstelle jeweils für alle 8 jeweils ein JSON und dann nochmal je ein YAML die die Definition und alle benötigten Infos für die Funktion / Fähigkeit oder das gewünschte Tool für den Einsatz von Agenten angeführt, eindeutig durch klare variablen namen und durch deutliche Beschreibungen vollumfänglich definiert wurde und speichere sie in dem neuen ordner @skills)
-
-
-# TODO: Terminverwaltung und Kalenderansicht
-TODO: Termine sollen aus mehreren Google Kalendern und mehreren Outlook Kalendern gesammelt, fusioniert und synchronisiert werden. Außerdem soll es eine visuelle Kalenderansicht geben, in der Termine auch bearbeitet werden können und anschließend so formatiert werden, dass sowohl Google, als auch Outlook die Termine korrekt versteht und zB mit von JARVIS ergänzten Details in der Beschreibung oder im eingetragenen Ort diese zusätzlichen Informationen ebenfalls einspeichert.
-
-# TODO: Impfungen Coordinator
-TODO: Erstelle eine Jarvis Funktion, in der ich und andere Personen ihre vergangenen Impftermine aus dem Impfpass digital übertragen können und dann je nach Impfung und Impfstoff per Websuche und AI ermittelt werden soll, wann die nächste Impfung empfohlen wird nachzuimpfen und wann der Impfschutz ohne weitere Impfung aufhören könnte zu wirken bzw. offiziell nach dieser Zeit kein Impfschutz mehr gegeben ist.
-Für Impfungen die in den nächsten 18 Monaten aufgefrischt werden müssen, soll eine Benachrichtigung als E-Mail und als Aufgabe in den Google Kalender eingetragen werden.
-JARVIS soll außerdem herausfinden, welche Impfungen aktuell weltweit verfügbar sind und welche Impfungen aktuell in Österreich verfügbar sind und sinnvoll sind.
-Bei Reisen ins Ausland soll JARVIS eine Auskunft über empfohlene Impfungen geben und eine Liste erstellen an allen Impfungen die für das Reiszielland empfohlen werden und markiert ist, welche Impfungen ich schon habe und welche noch fehlen. JARVIS soll für die fehlenden Impfungen auch gleich eine Preisrecherche durchführen und die Gesamtkosten von verschiedenen Anbietern miteinander vergleichen und gegenüberstellen.
-Beim Eintragen soll auch gleich eine Websuche durchgeführt werden, ob der jeweilige Impfstoff korrekt geschrieben ist und gegen welche Krankheit der jeweilige Impfstoff wirken soll.
-
-
-
-# TODO: Personeninfo Datenbank
-TODO: Es soll eine umfangreiche Datenbank erstellt werden, in der ALLE Daten von Personen mit denen ich in Kontakt getreten bin oder mit denen ich iwann etwas zu tun hatte gespeichert werden. Zu den Daten die gespeichert werden sollen zählen, Profilfoto, Vorname, Nachname, 2. Vorname, Spitzname, Akademischer Titel, Freundes- oder Bekanntenkreis, Beziehung zu mir, Kontaktdaten (Telefon, E-Mail, Eigene Webseite, Social Media wie LinkedIn oder YouTube usw.), Geburtsdatum, Adresse (Land, Bundesland/Region, Postleitzahl PLZ inkl. Ländercode, Ort, Straße & Hausnummer), Beruf, Arbeitgeber, Beziehungsstatus und ggf. Beziehungspartner, Kinder als Verknüpfung zu weiteren Personen in der Datenbank, Alter, woher_kennen_wir_uns, wie_lang_kennen_wir_uns, letztes Treffen, usw.
-Diese Datenbank soll dynamisch anpassbar und erweiterbar sein und soll durch tägliche Backups, wobei immer die letzten 3 aufgehoben werden, möglichst abgesichert gegen Datenverlust sein.
-
-
-# TODO: Routenplaner
-TODO: Gehwege, Öffentliche Transportmittel oder ggf. Autofahr Routen sollen von JARVIS sowohl auf Anfrage, als auch automatisch für Kalendereinträge die Orte eingetragen haben, deren Distanz länger als 10 Minuten Gehweg beträgt. Dafür soll im optimalfall google maps als Routenplaner verwendet und die Route direkt an mich bzw. mein Google Konto gesentet werden. Falls das keine Option ist, darf JARVIS auch andere Routenplaner für die Ermittlung der Wegzeit befragen. Falls möglich möchte ich so viel wie möglich zu Fuß gehen (bis zu einer Gehzeit von über 25 minuten). Ab 25 min würde ich wenn möglich gerne mit öffentlichen verkehrsmitteln fahren. Falls notwendig kann ich auch auf das Auto umsteigen, zB wenn die öffentliche Fahrzeit weit über der Fahrzeit mit dem Auto liegt. Wenn ein Weg- und Transfertermin mit dem Auto im Kalender eingetragen werden soll, dann füge als Gast zu diesem Termin immer eine bestimmte Adresse hinzu, damit die Person weiß, dass ich das Auto für eine Fahr benötige.
-
-
-# TODO: 1password for JARVIS
-Damit JARVIS sich in meine Dienste einloggen kann, soll es einen Zugang zu einem bestimmten einzelnen Vault in meinem 1Password Account haben. Die anderen Vaults soll JARVIS nicht sehen oder gar öffnen können.
-
-
-
-# TODO: Kalendereinträge aus Nachrichten
-TODO: Mails, Anrufen, SMS, WhatsApp nachriten, Signal nachrichten, Slack Nachrichten oder MS Teams Nachrichten erstellen und zeitlich im Kalender einordnen (zB Wegzeiten beachten)
-TODO: fehlende Informationen (zB Ort, Google Maps Route, nähere Infos zum Kalendereintrag aus Nachrichten usw.) im jeweiligen Kalendereintrag in Google und in Outlook ergänzen
-
-
-
-
-
-# TODO: Trading JARVIS
-TODO: Exakte mathematische und numerische Modelle und Methoden, sowie Markt- und Trading-Simulationen müssen recherchiert und für JARVIS als Wissens- und Entscheidungsgrundlage und als Berechnungsbasis dienen um Risiko, Rendite, Steuern und Trading-Kalkulation und Finanzierung auf Professor- oder PhD Niveau durchführen zu können.
-TODO: Visualisierung der Berechnungen und der Simulationen sollen ebenfalls zu Kontrollzwecken verfügbar sein
-
-
-
-# TODO: JARVIS soll einen eigenen Android Emulator eingebaut haben, mit dem auch Apps wie WhatsAPP oder andere Apps (zB Spiele, Umfragen, Produktive Apps etc.) verwendet werden können und JARVIS soll diese eigenständig bedienen und ausführen können.
-TODO: WhatsAPP und Signal Nachrichten zu einer bestimmten Uhrzeit an eine oder mehrer Personen abschicken
-TODO: Apps, wie Testerheld, stellen kleine leicht zu lösende Aufgaben in einer Android App. Dabei soll zB ein Video angeschaut werden oder eine Handy App soll gestartet werden, für 30 Sekunden offen sein und es müssen zB ddieer Anfangscredits die man zu Beginn erhalten hat ausgegeben werden, dann kann man wieder zurück in die Testerheld App und bekommt dafür eine virtuelle Belohnung. JARVIS soll die App Testerheld und andere Apps wie diese steuern können, es sollen die Aufgaben und Bedingungen zum Freischalten der virtuellen Belohnung ermittelt und verstanden und in weiterer Folge auch vollständig autonom umgesettzt werden.
-
-
-
-# TODO: J.A.R.V.I.S anzeigen, nicht HARVIS
-beim starten desmit make dev wird leider "HARVIS" statt "J.A.R.V.I.S" im terminal angezeigt.
-
-
-git clone git@github.com:Mirakulix/anthropic-cookbook.git
-git clone git@github.com:Mirakulix/courses.git
-git clone git@github.com:anthropics/claude-quickstarts.git
-git clone git@github.com:Mirakulix/anthropic-quickstarts.git
-git clone git@github.com:Mirakulix/claude-code-action.git
-git clone git@github.com:Mirakulix/anthropic-sdk-python.git
-git clone git@github.com:Mirakulix/claude-code-sdk-python.git
-
-
-
-
-
-git@github.com:Mirakulix/system-prompts-and-models-of-ai-tools.git
-git@github.com:Mirakulix/CL4R1T4S.git
-git@github.com:Mirakulix/casibase-enterprise-rag-system.git
-
+  Sie bietet maximale Sicherheit, Skalierbarkeit und Flexibilität für autonome Code-Entwicklung mit Claude Code
+  Integration.

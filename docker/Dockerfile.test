@@ -1,0 +1,61 @@
+# JarvisTest - Automated Testing & Quality Assurance
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    git \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python testing dependencies
+COPY requirements-test.txt .
+RUN pip install --no-cache-dir -r requirements-test.txt
+
+# Install comprehensive testing stack
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-cov \
+    pytest-xdist \
+    pytest-mock \
+    pytest-asyncio \
+    pytest-benchmark \
+    locust \
+    bandit \
+    safety \
+    semgrep \
+    coverage \
+    tox
+
+# Copy source code
+COPY jarvis_test/ ./jarvis_test/
+COPY shared/ ./shared/
+COPY skills/ ./skills/
+COPY tests/ ./tests/
+
+# Create test directories
+RUN mkdir -p /app/test_results /app/coverage /app/reports
+
+# Create non-root user
+RUN useradd -m -u 1000 jarvis && \
+    chown -R jarvis:jarvis /app
+USER jarvis
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8004/health || exit 1
+
+EXPOSE 8004
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV PYTEST_ARGS="-v --tb=short"
+ENV COVERAGE_THRESHOLD=80
+ENV SECURITY_SCAN_ENABLED=true
+ENV PERFORMANCE_TEST_ENABLED=true
+
+CMD ["python", "-m", "jarvis_test.main"]

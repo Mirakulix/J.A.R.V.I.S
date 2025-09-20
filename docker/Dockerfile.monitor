@@ -1,0 +1,53 @@
+# JarvisMonitor - System Monitoring & Security
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    htop \
+    iotop \
+    netstat-nat \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements-monitor.txt .
+RUN pip install --no-cache-dir -r requirements-monitor.txt
+
+# Install monitoring tools
+RUN pip install --no-cache-dir \
+    prometheus-client \
+    psutil \
+    docker \
+    kubernetes \
+    grafana-api
+
+# Copy source code
+COPY jarvis_monitor/ ./jarvis_monitor/
+COPY shared/ ./shared/
+
+# Create monitoring directories
+RUN mkdir -p /app/metrics /app/logs /app/alerts
+
+# Create non-root user
+RUN useradd -m -u 1000 jarvis && \
+    chown -R jarvis:jarvis /app
+USER jarvis
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8005/health || exit 1
+
+EXPOSE 8005 9090
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV PROMETHEUS_PORT=9090
+ENV ALERT_WEBHOOK_URL=""
+ENV LOG_RETENTION_DAYS=30
+ENV METRICS_INTERVAL=15
+
+CMD ["python", "-m", "jarvis_monitor.main"]

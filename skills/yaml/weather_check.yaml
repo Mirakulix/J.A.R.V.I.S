@@ -1,0 +1,57 @@
+skill_id: weather_check
+name: Weather Information Retrieval
+description: Retrieves current weather information for a specified location using weather APIs
+category: simple
+version: 1.0.0
+dependencies:
+  - requests
+  - json
+
+api_requirements:
+  weather_api:
+    provider: openweathermap
+    api_key_env_var: OPENWEATHER_API_KEY
+    base_url: https://api.openweathermap.org/data/2.5
+
+inputs:
+  location:
+    type: string
+    required: true
+    description: City name or coordinates (lat,lon)
+    validation: ^[a-zA-Z\s,.-]+$|^-?\d+\.\d+,-?\d+\.\d+$
+  units:
+    type: string
+    required: false
+    default: metric
+    allowed_values: [metric, imperial, kelvin]
+    description: Temperature units
+
+outputs:
+  temperature:
+    type: float
+    description: Current temperature
+  humidity:
+    type: integer
+    description: Humidity percentage
+  conditions:
+    type: string
+    description: Weather conditions description
+  wind_speed:
+    type: float
+    description: Wind speed
+
+execution:
+  type: python_function
+  entry_point: get_weather
+  timeout: 30
+  retry_attempts: 3
+
+error_handling:
+  api_error: Return error message with suggestion to check API key
+  network_error: Retry with exponential backoff
+  invalid_location: Return suggestion for valid location format
+
+security:
+  requires_api_key: true
+  rate_limit: 60_per_hour
+  data_privacy: no_storage

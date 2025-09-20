@@ -1,0 +1,351 @@
+skill_id: phone_call_scheduler
+name: Autonomous AI Phone Call Scheduling Assistant
+description: Advanced AI system that autonomously makes phone calls to schedule appointments with intelligent conversation handling, calendar integration, location awareness, and mood analysis
+category: complex
+version: 1.0.0
+dependencies:
+  - twilio
+  - speech_recognition
+  - pyttsx3
+  - google-auth
+  - exchangelib
+  - geopy
+  - openai
+  - asyncio
+  - schedule
+
+api_requirements:
+  twilio_api:
+    provider: twilio
+    account_sid_env_var: TWILIO_ACCOUNT_SID
+    auth_token_env_var: TWILIO_AUTH_TOKEN
+    phone_number_env_var: TWILIO_PHONE_NUMBER
+    voice_api: true
+    sms_fallback: true
+  openai_api:
+    provider: openai
+    api_key_env_var: OPENAI_API_KEY
+    model: gpt-4
+    speech_model: whisper-1
+    tts_model: tts-1
+  google_calendar:
+    provider: google
+    credentials_file: google_calendar_credentials.json
+    scopes: [https://www.googleapis.com/auth/calendar]
+    calendar_id_env_var: GOOGLE_CALENDAR_ID
+  outlook_calendar:
+    provider: microsoft
+    client_id_env_var: OUTLOOK_CLIENT_ID
+    client_secret_env_var: OUTLOOK_CLIENT_SECRET
+    tenant_id_env_var: OUTLOOK_TENANT_ID
+    email_env_var: OUTLOOK_EMAIL
+  google_maps:
+    provider: google
+    api_key_env_var: GOOGLE_MAPS_API_KEY
+    services: [directions, geocoding, places]
+  speech_services:
+    provider: eleven_labs
+    api_key_env_var: ELEVENLABS_API_KEY
+    voice_id_env_var: ELEVENLABS_VOICE_ID
+
+inputs:
+  call_request:
+    type: object
+    required: true
+    properties:
+      contact_name:
+        type: string
+        required: true
+      contact_phone:
+        type: string
+        required: true
+      purpose:
+        type: string
+        required: true
+      priority:
+        type: string
+        enum: [low, medium, high, urgent]
+        default: medium
+      desired_meeting_location:
+        type: string
+      preferred_time_slots:
+        type: array
+        items:
+          type: string
+      meeting_duration:
+        type: integer
+        default: 60
+      latest_possible_date:
+        type: string
+        format: date
+  caller_context:
+    type: object
+    required: false
+    properties:
+      work_address:
+        type: string
+      home_address:
+        type: string
+      current_location:
+        type: string
+      work_schedule:
+        type: object
+      travel_preferences:
+        type: object
+      minimum_notice_hours:
+        type: integer
+        default: 60
+  conversation_style:
+    type: object
+    required: false
+    properties:
+      personality:
+        type: string
+        enum: [professional, friendly, assertive, diplomatic]
+        default: professional
+      language:
+        type: string
+        default: en
+      voice_characteristics:
+        type: object
+      negotiation_style:
+        type: string
+        enum: [collaborative, competitive, accommodating]
+      jibberlink_mode:
+        type: boolean
+        default: false
+  email_integration:
+    type: object
+    required: false
+    properties:
+      extract_context_from_emails:
+        type: boolean
+        default: true
+      search_keywords:
+        type: array
+      email_lookback_days:
+        type: integer
+        default: 30
+      analyze_communication_history:
+        type: boolean
+        default: true
+  ai_behavior:
+    type: object
+    required: false
+    properties:
+      mood_analysis:
+        type: boolean
+        default: true
+      adaptive_strategy:
+        type: boolean
+        default: true
+      learning_enabled:
+        type: boolean
+        default: true
+      escalation_triggers:
+        type: array
+      fallback_strategies:
+        type: array
+  compliance_settings:
+    type: object
+    required: false
+    properties:
+      record_calls:
+        type: boolean
+        default: true
+      consent_required:
+        type: boolean
+        default: true
+      data_retention_days:
+        type: integer
+        default: 90
+      gdpr_compliance:
+        type: boolean
+        default: true
+
+outputs:
+  call_result:
+    type: object
+    properties:
+      call_success:
+        type: boolean
+      appointment_scheduled:
+        type: boolean
+      scheduled_appointment:
+        type: object
+        properties:
+          date_time:
+            type: string
+            format: datetime
+          location:
+            type: string
+          duration:
+            type: integer
+          calendar_event_id:
+            type: string
+          confirmation_method:
+            type: string
+      call_duration:
+        type: integer
+      attempts_made:
+        type: integer
+      final_status:
+        type: string
+  conversation_analysis:
+    type: object
+    properties:
+      transcript:
+        type: string
+      summary:
+        type: string
+      sentiment_analysis:
+        type: object
+      mood_detected:
+        type: string
+      negotiation_difficulty:
+        type: integer
+        min: 1
+        max: 10
+      key_points:
+        type: array
+      follow_up_actions:
+        type: array
+  scheduling_analysis:
+    type: object
+    properties:
+      options_presented:
+        type: array
+      options_considered:
+        type: array
+      conflicts_resolved:
+        type: array
+      travel_time_calculated:
+        type: object
+      calendar_optimization:
+        type: object
+  ai_performance:
+    type: object
+    properties:
+      conversation_flow_score:
+        type: number
+      objective_achievement:
+        type: number
+      adaptability_score:
+        type: number
+      efficiency_metrics:
+        type: object
+      learning_outcomes:
+        type: array
+  email_summary:
+    type: object
+    properties:
+      email_sent:
+        type: boolean
+      email_content:
+        type: string
+      recipients:
+        type: array
+      attachments:
+        type: array
+  calendar_updates:
+    type: array
+    items:
+      type: object
+      properties:
+        calendar_service:
+          type: string
+        event_id:
+          type: string
+        action:
+          type: string
+        status:
+          type: string
+
+execution:
+  type: python_function
+  entry_point: autonomous_phone_scheduler
+  timeout: 1800
+  retry_attempts: 3
+  async_processing: true
+  real_time_processing: true
+
+conversation_engine:
+  speech_to_text:
+    providers: [openai_whisper, google_speech, azure_speech]
+    real_time_processing: true
+    language_detection: true
+    noise_reduction: true
+  text_to_speech:
+    providers: [elevenlabs, azure_tts, google_tts]
+    voice_cloning: false
+    emotion_synthesis: true
+    prosody_control: true
+  natural_language_processing:
+    intent_recognition: true
+    entity_extraction: true
+    sentiment_analysis: true
+    context_awareness: true
+    multi_turn_conversation: true
+  jibberlink_protocol:
+    enabled: false
+    signal_library: custom_ai_signals
+    compression_ratio: 10
+    error_correction: true
+    fallback_to_natural: true
+
+calendar_intelligence:
+  multi_calendar_sync: true
+  conflict_detection: true
+  travel_time_calculation: true
+  buffer_time_management: true
+  meeting_preparation_time: true
+  location_based_scheduling: true
+  timezone_handling: true
+
+location_services:
+  address_geocoding: true
+  route_calculation: true
+  traffic_analysis: true
+  public_transport_integration: true
+  alternative_locations: true
+  accessibility_check: true
+
+ai_capabilities:
+  mood_detection:
+    voice_analysis: true
+    speech_pattern_analysis: true
+    response_time_analysis: true
+    stress_level_detection: true
+  negotiation_strategies:
+    collaborative_approach: true
+    win_win_solutions: true
+    concession_management: true
+    deadline_pressure_handling: true
+  adaptive_behavior:
+    personality_matching: true
+    communication_style_adaptation: true
+    cultural_sensitivity: true
+    professional_context_awareness: true
+
+security_privacy:
+  call_encryption: true
+  transcript_encryption: true
+  consent_management: true
+  data_anonymization: true
+  secure_credential_storage: true
+  audit_trail: true
+
+error_handling:
+  busy_signal: Schedule callback with optimal timing
+  voicemail: Leave professional message and follow up via email
+  language_barrier: Switch to available language or use interpreter service
+  technical_difficulties: Gracefully end call and retry with different approach
+  hostile_response: Remain professional, de-escalate, and offer alternative communication
+  scheduling_conflicts: Propose multiple alternatives and negotiate optimal solution
+
+quality_assurance:
+  conversation_monitoring: true
+  success_rate_tracking: true
+  continuous_learning: true
+  performance_optimization: true
+  ethical_guidelines_enforcement: true

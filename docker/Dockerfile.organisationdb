@@ -1,0 +1,59 @@
+# OrganisationDB - Calendar, Emails, Documents Database
+FROM postgres:15-alpine
+
+# Install additional extensions and tools
+RUN apk add --no-cache \
+    postgresql-contrib \
+    postgresql-dev \
+    python3 \
+    py3-pip \
+    curl \
+    tzdata
+
+# Install Python dependencies for database management
+RUN pip3 install --no-cache-dir --break-system-packages \
+    psycopg2-binary \
+    alembic \
+    sqlalchemy \
+    icalendar \
+    email-validator
+
+# Copy database initialization scripts
+COPY database/organisationdb/init/ /docker-entrypoint-initdb.d/
+COPY database/organisationdb/migrations/ /opt/migrations/
+COPY database/organisationdb/backup/ /opt/backup/
+
+# Copy custom configuration
+COPY database/organisationdb/postgresql.conf /etc/postgresql/postgresql.conf
+COPY database/organisationdb/pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Create backup and sync scripts
+COPY database/organisationdb/backup-script.sh /usr/local/bin/
+COPY database/organisationdb/calendar-sync.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/backup-script.sh && \
+    chmod +x /usr/local/bin/calendar-sync.py
+
+# Set up automated tasks
+RUN mkdir -p /etc/cron.d && \
+    echo "0 2 * * * /usr/local/bin/backup-script.sh" > /etc/cron.d/org-backup && \
+    echo "*/15 * * * * /usr/local/bin/calendar-sync.py" > /etc/cron.d/calendar-sync
+
+# Environment variables
+ENV POSTGRES_DB=organisationdb
+ENV POSTGRES_USER=jarvis_org
+ENV POSTGRES_PASSWORD_FILE=/run/secrets/postgres_org_password
+ENV PGDATA=/var/lib/postgresql/data/organisationdb
+ENV TZ=Europe/Vienna
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB || exit 1
+
+EXPOSE 5433
+
+# Custom entrypoint
+COPY database/organisationdb/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

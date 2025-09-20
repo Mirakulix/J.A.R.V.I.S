@@ -1,0 +1,57 @@
+# TemporaryDB - Development & Testing Database
+FROM postgres:15-alpine
+
+# Install additional tools for development
+RUN apk add --no-cache \
+    postgresql-contrib \
+    postgresql-dev \
+    python3 \
+    py3-pip \
+    curl
+
+# Install Python dependencies for development tools
+RUN pip3 install --no-cache-dir --break-system-packages \
+    psycopg2-binary \
+    alembic \
+    sqlalchemy \
+    faker \
+    factory-boy
+
+# Copy database initialization scripts for testing
+COPY database/temporarydb/init/ /docker-entrypoint-initdb.d/
+COPY database/temporarydb/test-data/ /opt/test-data/
+
+# Copy development configuration (less strict than production)
+COPY database/temporarydb/postgresql.conf /etc/postgresql/postgresql.conf
+COPY database/temporarydb/pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Create test data generation and cleanup scripts
+COPY database/temporarydb/generate-test-data.py /usr/local/bin/
+COPY database/temporarydb/cleanup-temp-data.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/generate-test-data.py && \
+    chmod +x /usr/local/bin/cleanup-temp-data.sh
+
+# Set up automatic cleanup of old test data (daily at 1 AM)
+RUN mkdir -p /etc/cron.d && \
+    echo "0 1 * * * /usr/local/bin/cleanup-temp-data.sh" > /etc/cron.d/temp-cleanup
+
+# Environment variables for temporary/test database
+ENV POSTGRES_DB=temporarydb
+ENV POSTGRES_USER=jarvis_temp
+ENV POSTGRES_PASSWORD=temp_development_only
+ENV PGDATA=/var/lib/postgresql/data/temporarydb
+ENV AUTO_CLEANUP_DAYS=7
+ENV GENERATE_TEST_DATA=true
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB || exit 1
+
+EXPOSE 5435
+
+# Development-focused entrypoint
+COPY database/temporarydb/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

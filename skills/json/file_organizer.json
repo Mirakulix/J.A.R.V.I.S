@@ -1,0 +1,78 @@
+{
+  "skill_id": "file_organizer",
+  "name": "Automatic File Organization",
+  "description": "Organizes files in a directory by type, date, or custom rules",
+  "category": "simple",
+  "version": "1.0.0",
+  "dependencies": ["os", "shutil", "pathlib", "datetime"],
+  "inputs": {
+    "source_directory": {
+      "type": "string",
+      "required": true,
+      "description": "Path to directory to organize",
+      "validation": "path_exists"
+    },
+    "organization_method": {
+      "type": "string",
+      "required": false,
+      "default": "by_type",
+      "allowed_values": ["by_type", "by_date", "by_size", "custom"],
+      "description": "How to organize files"
+    },
+    "create_subdirs": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether to create subdirectories"
+    },
+    "dry_run": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Preview changes without executing"
+    }
+  },
+  "outputs": {
+    "files_moved": {
+      "type": "integer",
+      "description": "Number of files moved"
+    },
+    "directories_created": {
+      "type": "integer",
+      "description": "Number of directories created"
+    },
+    "organization_summary": {
+      "type": "object",
+      "description": "Summary of organization actions"
+    },
+    "errors": {
+      "type": "array",
+      "description": "List of any errors encountered"
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "organize_files",
+    "timeout": 300,
+    "retry_attempts": 1
+  },
+  "file_type_mapping": {
+    "documents": [".pdf", ".doc", ".docx", ".txt", ".rtf"],
+    "images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"],
+    "videos": [".mp4", ".avi", ".mkv", ".mov", ".wmv"],
+    "audio": [".mp3", ".wav", ".flac", ".aac", ".ogg"],
+    "archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
+    "code": [".py", ".js", ".html", ".css", ".cpp", ".java"]
+  },
+  "safety_features": {
+    "backup_before_move": true,
+    "skip_system_files": true,
+    "preserve_permissions": true,
+    "log_all_actions": true
+  },
+  "error_handling": {
+    "permission_denied": "Log error and continue with next file",
+    "file_in_use": "Skip file and add to retry list",
+    "insufficient_space": "Stop execution and report error"
+  }
+}

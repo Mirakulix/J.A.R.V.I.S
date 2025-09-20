@@ -1,0 +1,185 @@
+{
+  "skill_id": "smart_home_controller",
+  "name": "Unified Smart Home Management",
+  "description": "Controls and monitors smart home devices across multiple platforms with AI-driven automation and energy optimization",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["requests", "paho-mqtt", "zeroconf", "asyncio", "schedule", "numpy"],
+  "api_requirements": {
+    "philips_hue": {
+      "provider": "philips",
+      "bridge_ip_env_var": "HUE_BRIDGE_IP",
+      "api_key_env_var": "HUE_API_KEY",
+      "discovery_method": "upnp"
+    },
+    "alexa_api": {
+      "provider": "amazon",
+      "client_id_env_var": "ALEXA_CLIENT_ID",
+      "client_secret_env_var": "ALEXA_CLIENT_SECRET",
+      "refresh_token_env_var": "ALEXA_REFRESH_TOKEN"
+    },
+    "google_home": {
+      "provider": "google",
+      "credentials_file": "google_home_credentials.json",
+      "project_id_env_var": "GOOGLE_HOME_PROJECT_ID"
+    },
+    "homeassistant": {
+      "provider": "home_assistant",
+      "api_url_env_var": "HA_API_URL",
+      "api_token_env_var": "HA_API_TOKEN"
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["control_device", "get_status", "create_scene", "schedule_automation", "energy_report", "security_check"],
+      "description": "Smart home action to perform"
+    },
+    "device_selection": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "device_ids": {"type": "array", "items": {"type": "string"}},
+        "device_types": {"type": "array", "items": {"type": "string"}},
+        "rooms": {"type": "array", "items": {"type": "string"}},
+        "all_devices": {"type": "boolean", "default": false}
+      },
+      "description": "Devices to target for action"
+    },
+    "control_parameters": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "power_state": {"type": "boolean"},
+        "brightness": {"type": "integer", "min": 0, "max": 100},
+        "color": {"type": "string"},
+        "temperature": {"type": "number", "min": 10, "max": 35},
+        "volume": {"type": "integer", "min": 0, "max": 100},
+        "custom_settings": {"type": "object"}
+      }
+    },
+    "scene_config": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "scene_name": {"type": "string"},
+        "device_states": {"type": "object"},
+        "triggers": {"type": "array"},
+        "duration": {"type": "integer"}
+      }
+    },
+    "automation_schedule": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "trigger_type": {"type": "string", "enum": ["time", "sensor", "location", "weather"]},
+        "trigger_conditions": {"type": "object"},
+        "actions": {"type": "array"},
+        "enabled": {"type": "boolean", "default": true}
+      }
+    },
+    "ai_preferences": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "energy_saving_mode": {"type": "boolean", "default": true},
+        "comfort_priority": {"type": "integer", "min": 1, "max": 10},
+        "learning_enabled": {"type": "boolean", "default": true},
+        "security_level": {"type": "string", "enum": ["low", "medium", "high"]}
+      }
+    }
+  },
+  "outputs": {
+    "device_status": {
+      "type": "array",
+      "description": "Current status of all monitored devices",
+      "items": {
+        "type": "object",
+        "properties": {
+          "device_id": {"type": "string"},
+          "device_name": {"type": "string"},
+          "device_type": {"type": "string"},
+          "room": {"type": "string"},
+          "power_state": {"type": "boolean"},
+          "current_settings": {"type": "object"},
+          "connectivity_status": {"type": "string"},
+          "last_updated": {"type": "string"}
+        }
+      }
+    },
+    "action_results": {
+      "type": "object",
+      "properties": {
+        "success": {"type": "boolean"},
+        "affected_devices": {"type": "integer"},
+        "failed_devices": {"type": "array"},
+        "execution_time": {"type": "number"}
+      }
+    },
+    "energy_analytics": {
+      "type": "object",
+      "properties": {
+        "current_consumption": {"type": "number"},
+        "daily_usage": {"type": "number"},
+        "cost_estimate": {"type": "number"},
+        "savings_opportunities": {"type": "array"},
+        "efficiency_score": {"type": "integer"}
+      }
+    },
+    "security_status": {
+      "type": "object",
+      "properties": {
+        "all_doors_locked": {"type": "boolean"},
+        "security_cameras_active": {"type": "boolean"},
+        "motion_detected": {"type": "boolean"},
+        "alerts": {"type": "array"}
+      }
+    },
+    "ai_recommendations": {
+      "type": "array",
+      "description": "AI-generated suggestions for home optimization",
+      "items": {"type": "string"}
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "manage_smart_home",
+    "timeout": 120,
+    "retry_attempts": 3,
+    "async_processing": true,
+    "parallel_device_control": true
+  },
+  "device_discovery": {
+    "auto_discovery": true,
+    "supported_protocols": ["mqtt", "zigbee", "zwave", "wifi", "bluetooth"],
+    "discovery_timeout": 30,
+    "device_fingerprinting": true
+  },
+  "ai_features": {
+    "pattern_learning": true,
+    "predictive_automation": true,
+    "energy_optimization": true,
+    "anomaly_detection": true,
+    "voice_command_processing": true
+  },
+  "security": {
+    "device_authentication": true,
+    "encrypted_communication": true,
+    "access_control": true,
+    "audit_logging": true,
+    "vulnerability_scanning": true
+  },
+  "integration_protocols": {
+    "mqtt_broker": "local",
+    "webhook_endpoints": true,
+    "api_versioning": true,
+    "fallback_mechanisms": true
+  },
+  "error_handling": {
+    "device_offline": "Log and notify, continue with available devices",
+    "api_rate_limit": "Implement exponential backoff",
+    "network_failure": "Cache commands for retry when connection restored",
+    "device_conflict": "Prioritize by user preferences and safety"
+  }
+}

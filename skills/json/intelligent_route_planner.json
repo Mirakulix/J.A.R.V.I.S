@@ -1,0 +1,328 @@
+{
+  "skill_id": "intelligent_route_planner",
+  "name": "Intelligent Multi-Modal Route Planner",
+  "description": "Advanced route planning system that automatically calculates optimal routes for walking, public transport, and driving based on user preferences and calendar events, with integration to Google Maps and other navigation services",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["googlemaps", "requests", "geopy", "polyline", "datetime", "asyncio", "gtts", "beautifulsoup4"],
+  "api_requirements": {
+    "google_maps": {
+      "provider": "google",
+      "api_key_env_var": "GOOGLE_MAPS_API_KEY",
+      "services": ["directions", "geocoding", "places", "distance_matrix", "roads"],
+      "quota_limit": "40000_requests_per_month"
+    },
+    "google_calendar": {
+      "provider": "google",
+      "credentials_file": "google_calendar_credentials.json",
+      "integration_method": "direct_call",
+      "skill_reference": "calendar_sync_manager"
+    },
+    "public_transport_apis": {
+      "wiener_linien": {"api_key_env_var": "WIENER_LINIEN_API_KEY"},
+      "oebb": {"api_key_env_var": "OEBB_API_KEY"},
+      "db_bahn": {"api_key_env_var": "DB_BAHN_API_KEY"},
+      "citymapper": {"api_key_env_var": "CITYMAPPER_API_KEY"}
+    },
+    "traffic_data": {
+      "here_maps": {"api_key_env_var": "HERE_API_KEY"},
+      "mapbox": {"api_key_env_var": "MAPBOX_API_KEY"},
+      "tomtom": {"api_key_env_var": "TOMTOM_API_KEY"}
+    },
+    "alternative_routing": {
+      "openstreetmap": {"nominatim_endpoint": "https://nominatim.openstreetmap.org"},
+      "graphhopper": {"api_key_env_var": "GRAPHHOPPER_API_KEY"},
+      "mapquest": {"api_key_env_var": "MAPQUEST_API_KEY"}
+    }
+  },
+  "inputs": {
+    "route_action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["plan_route", "auto_calendar_routes", "send_route_to_device", "compare_routes", "monitor_traffic", "update_preferences"],
+      "description": "Route planning action to perform"
+    },
+    "route_request": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "origin": {"type": "string", "required": true, "description": "Starting location"},
+        "destination": {"type": "string", "required": true, "description": "Destination location"},
+        "departure_time": {"type": "string", "format": "datetime"},
+        "arrival_time": {"type": "string", "format": "datetime"},
+        "transport_modes": {"type": "array", "items": {"type": "string", "enum": ["walking", "public_transport", "driving", "cycling"]}, "default": ["walking", "public_transport", "driving"]},
+        "route_preference": {"type": "string", "enum": ["fastest", "shortest", "least_transfers", "most_walking", "eco_friendly"], "default": "fastest"},
+        "avoid": {"type": "array", "items": {"type": "string", "enum": ["tolls", "highways", "ferries", "stairs", "elevators"]}},
+        "accessibility_needs": {"type": "boolean", "default": false}
+      }
+    },
+    "user_preferences": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "max_walking_time": {"type": "integer", "default": 25, "description": "Maximum walking time in minutes"},
+        "min_walking_threshold": {"type": "integer", "default": 10, "description": "Minimum distance for route planning in minutes"},
+        "prefer_walking_up_to": {"type": "integer", "default": 25},
+        "prefer_public_transport_from": {"type": "integer", "default": 25},
+        "use_car_when_pt_exceeds_driving_by": {"type": "number", "default": 1.5, "description": "Use car when public transport time exceeds driving time by this factor"},
+        "default_car_contact": {"type": "string", "description": "Contact to add when car travel is planned"},
+        "home_address": {"type": "string"},
+        "work_address": {"type": "string"},
+        "walking_speed": {"type": "string", "enum": ["slow", "normal", "fast"], "default": "normal"},
+        "mobility_restrictions": {"type": "array"}
+      }
+    },
+    "calendar_integration": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "auto_add_travel_time": {"type": "boolean", "default": true},
+        "buffer_time_minutes": {"type": "integer", "default": 5},
+        "create_travel_events": {"type": "boolean", "default": true},
+        "update_existing_events": {"type": "boolean", "default": true},
+        "notification_preferences": {"type": "object"}
+      }
+    },
+    "route_sharing": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "send_to_google_maps": {"type": "boolean", "default": true},
+        "share_with_contacts": {"type": "array"},
+        "include_live_tracking": {"type": "boolean", "default": false},
+        "notification_method": {"type": "string", "enum": ["push", "email", "sms"], "default": "push"}
+      }
+    },
+    "traffic_monitoring": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "monitor_active_routes": {"type": "boolean", "default": true},
+        "alert_on_delays": {"type": "boolean", "default": true},
+        "suggest_alternatives": {"type": "boolean", "default": true},
+        "delay_threshold_minutes": {"type": "integer", "default": 10}
+      }
+    }
+  },
+  "outputs": {
+    "route_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "route_id": {"type": "string"},
+          "transport_mode": {"type": "string"},
+          "total_duration": {"type": "integer", "description": "Total time in minutes"},
+          "walking_duration": {"type": "integer"},
+          "driving_duration": {"type": "integer"},
+          "public_transport_duration": {"type": "integer"},
+          "distance": {"type": "number", "description": "Distance in kilometers"},
+          "steps": {"type": "array"},
+          "cost_estimate": {"type": "number"},
+          "carbon_footprint": {"type": "number"},
+          "accessibility_friendly": {"type": "boolean"},
+          "traffic_conditions": {"type": "string"},
+          "departure_time": {"type": "string"},
+          "arrival_time": {"type": "string"},
+          "confidence_score": {"type": "number"}
+        }
+      }
+    },
+    "recommended_route": {
+      "type": "object",
+      "properties": {
+        "selected_route": {"type": "object"},
+        "recommendation_reason": {"type": "string"},
+        "alternative_options": {"type": "array"},
+        "user_preference_match": {"type": "number"},
+        "real_time_adjustments": {"type": "object"}
+      }
+    },
+    "calendar_updates": {
+      "type": "object",
+      "properties": {
+        "travel_events_created": {"type": "array"},
+        "existing_events_updated": {"type": "array"},
+        "calendar_conflicts_detected": {"type": "array"},
+        "buffer_times_added": {"type": "object"},
+        "car_usage_contacts_added": {"type": "array"}
+      }
+    },
+    "route_sharing_result": {
+      "type": "object",
+      "properties": {
+        "google_maps_link": {"type": "string"},
+        "shared_successfully": {"type": "boolean"},
+        "share_recipients": {"type": "array"},
+        "tracking_link": {"type": "string"},
+        "qr_code": {"type": "string"}
+      }
+    },
+    "traffic_insights": {
+      "type": "object",
+      "properties": {
+        "current_conditions": {"type": "object"},
+        "predicted_conditions": {"type": "object"},
+        "alternative_routes": {"type": "array"},
+        "delay_alerts": {"type": "array"},
+        "optimization_suggestions": {"type": "array"}
+      }
+    },
+    "environmental_impact": {
+      "type": "object",
+      "properties": {
+        "carbon_emissions_saved": {"type": "number"},
+        "calories_burned": {"type": "number"},
+        "cost_comparison": {"type": "object"},
+        "health_benefits": {"type": "object"},
+        "sustainability_score": {"type": "number"}
+      }
+    },
+    "route_analytics": {
+      "type": "object",
+      "properties": {
+        "route_efficiency": {"type": "number"},
+        "user_satisfaction_prediction": {"type": "number"},
+        "historical_performance": {"type": "object"},
+        "pattern_insights": {"type": "array"},
+        "optimization_opportunities": {"type": "array"}
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "plan_intelligent_route",
+    "timeout": 120,
+    "retry_attempts": 3,
+    "async_processing": true,
+    "real_time_updates": true
+  },
+  "routing_algorithms": {
+    "multimodal_optimization": {
+      "algorithm": "dijkstra_modified",
+      "weight_factors": {
+        "time": 0.4,
+        "cost": 0.2,
+        "comfort": 0.2,
+        "environmental_impact": 0.1,
+        "user_preference": 0.1
+      },
+      "real_time_adjustments": true
+    },
+    "machine_learning": {
+      "route_prediction": true,
+      "traffic_pattern_learning": true,
+      "user_behavior_analysis": true,
+      "preference_refinement": true
+    },
+    "fallback_strategies": {
+      "api_failure_handling": "local_routing_cache",
+      "offline_mode": "preloaded_routes",
+      "network_issues": "cached_alternatives"
+    }
+  },
+  "transport_mode_logic": {
+    "walking": {
+      "max_distance": "3km",
+      "preferred_up_to": "25_minutes",
+      "weather_consideration": true,
+      "terrain_analysis": true,
+      "safety_routes": true
+    },
+    "public_transport": {
+      "preferred_from": "25_minutes_walking",
+      "max_transfers": 3,
+      "accessibility_check": true,
+      "real_time_delays": true,
+      "cost_optimization": true
+    },
+    "driving": {
+      "trigger_condition": "pt_time > driving_time * 1.5",
+      "parking_consideration": true,
+      "traffic_awareness": true,
+      "fuel_cost_calculation": true,
+      "car_availability_check": true
+    },
+    "cycling": {
+      "weather_dependent": true,
+      "bike_lane_preference": true,
+      "elevation_consideration": true,
+      "bike_availability": false
+    }
+  },
+  "calendar_integration_features": {
+    "automatic_route_planning": {
+      "trigger_distance": "10_minutes_walking",
+      "advance_planning": "1_hour_before",
+      "conflict_detection": true,
+      "smart_scheduling": true
+    },
+    "travel_time_management": {
+      "buffer_time_calculation": true,
+      "preparation_time": true,
+      "arrival_optimization": true,
+      "departure_reminders": true
+    },
+    "car_usage_tracking": {
+      "auto_add_car_contact": true,
+      "parking_time_estimate": true,
+      "fuel_cost_tracking": true,
+      "carbon_footprint_logging": true
+    }
+  },
+  "google_maps_integration": {
+    "route_sharing": {
+      "direct_send_to_device": true,
+      "shareable_links": true,
+      "embedded_maps": true,
+      "turn_by_turn_navigation": true
+    },
+    "real_time_features": {
+      "live_traffic": true,
+      "incident_reports": true,
+      "route_alternatives": true,
+      "eta_updates": true
+    }
+  },
+  "accessibility_features": {
+    "mobility_support": {
+      "wheelchair_accessible_routes": true,
+      "elevator_preferences": true,
+      "step_free_access": true,
+      "audio_navigation": true
+    },
+    "visual_impairment": {
+      "voice_guidance": true,
+      "tactile_feedback": true,
+      "high_contrast_maps": true
+    }
+  },
+  "data_privacy_security": {
+    "location_data": {
+      "encryption": true,
+      "minimal_storage": true,
+      "user_consent": true,
+      "data_retention_policy": "30_days"
+    },
+    "route_sharing": {
+      "secure_links": true,
+      "expiring_shares": true,
+      "privacy_controls": true
+    }
+  },
+  "error_handling": {
+    "api_unavailable": "Switch to backup routing service and cache routes locally",
+    "location_not_found": "Use fuzzy matching and suggest similar locations",
+    "no_route_available": "Expand search radius and suggest alternative destinations",
+    "traffic_data_stale": "Use historical patterns and provide confidence intervals",
+    "calendar_sync_failure": "Store route data locally and retry sync later",
+    "device_sharing_failed": "Generate shareable link as fallback"
+  },
+  "performance_optimization": {
+    "route_caching": true,
+    "predictive_loading": true,
+    "compression": true,
+    "batch_processing": true,
+    "smart_prefetching": true
+  }
+}

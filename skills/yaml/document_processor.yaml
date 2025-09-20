@@ -1,0 +1,224 @@
+skill_id: document_processor
+name: AI-Powered Document Processing Engine
+description: Processes, analyzes, and transforms documents with OCR, NLP, and AI-driven content extraction and organization
+category: medium
+version: 1.0.0
+dependencies:
+  - PyPDF2
+  - pytesseract
+  - opencv-python
+  - transformers
+  - spacy
+  - pandas
+  - openpyxl
+  - python-docx
+
+api_requirements:
+  openai_api:
+    provider: openai
+    api_key_env_var: OPENAI_API_KEY
+    model: gpt-4
+    vision_model: gpt-4-vision-preview
+  azure_cognitive:
+    provider: microsoft
+    api_key_env_var: AZURE_COGNITIVE_KEY
+    endpoint_env_var: AZURE_COGNITIVE_ENDPOINT
+    services: [computer_vision, form_recognizer]
+
+inputs:
+  document_input:
+    type: object
+    required: true
+    properties:
+      file_path:
+        type: string
+      file_url:
+        type: string
+      base64_content:
+        type: string
+      raw_text:
+        type: string
+    description: Document source (file path, URL, base64, or raw text)
+  processing_tasks:
+    type: array
+    required: true
+    items:
+      type: string
+      enum: [ocr, text_extraction, entity_recognition, summarization, classification, translation, format_conversion, data_extraction, sentiment_analysis]
+    description: Processing tasks to perform
+  document_type:
+    type: string
+    required: false
+    default: auto_detect
+    allowed_values: [pdf, image, word, excel, powerpoint, text, invoice, contract, receipt, auto_detect]
+    description: Document type for optimized processing
+  extraction_targets:
+    type: object
+    required: false
+    properties:
+      entities:
+        type: array
+        items:
+          type: string
+      tables:
+        type: boolean
+        default: false
+      forms:
+        type: boolean
+        default: false
+      signatures:
+        type: boolean
+        default: false
+      custom_patterns:
+        type: array
+  output_format:
+    type: string
+    required: false
+    default: json
+    allowed_values: [json, xml, csv, excel, word, markdown, html]
+    description: Desired output format
+  language_settings:
+    type: object
+    required: false
+    properties:
+      input_language:
+        type: string
+        default: auto_detect
+      output_language:
+        type: string
+        default: same_as_input
+      translation_quality:
+        type: string
+        enum: [fast, accurate, professional]
+  ai_processing_config:
+    type: object
+    required: false
+    properties:
+      confidence_threshold:
+        type: float
+        default: 0.8
+      use_advanced_models:
+        type: boolean
+        default: true
+      custom_prompts:
+        type: object
+      validation_rules:
+        type: array
+
+outputs:
+  processed_content:
+    type: object
+    properties:
+      extracted_text:
+        type: string
+      structured_data:
+        type: object
+      entities:
+        type: array
+      tables:
+        type: array
+      images:
+        type: array
+  document_analysis:
+    type: object
+    properties:
+      document_type:
+        type: string
+      language:
+        type: string
+      page_count:
+        type: integer
+      word_count:
+        type: integer
+      confidence_scores:
+        type: object
+      quality_metrics:
+        type: object
+  extracted_entities:
+    type: array
+    items:
+      type: object
+      properties:
+        entity_type:
+          type: string
+        entity_value:
+          type: string
+        confidence:
+          type: float
+        location:
+          type: object
+  summary:
+    type: object
+    properties:
+      executive_summary:
+        type: string
+      key_points:
+        type: array
+      action_items:
+        type: array
+      important_dates:
+        type: array
+  classification:
+    type: object
+    properties:
+      primary_category:
+        type: string
+      sub_categories:
+        type: array
+      confidence:
+        type: float
+      tags:
+        type: array
+  processing_metadata:
+    type: object
+    properties:
+      processing_time:
+        type: number
+      tasks_completed:
+        type: array
+      errors:
+        type: array
+      warnings:
+        type: array
+
+execution:
+  type: python_function
+  entry_point: process_document
+  timeout: 300
+  retry_attempts: 2
+  parallel_processing: true
+  memory_optimization: true
+
+ocr_configuration:
+  engines: [tesseract, azure_ocr, google_vision]
+  preprocessing:
+    deskew: true
+    denoise: true
+    contrast_enhancement: true
+    resolution_upscaling: true
+  languages: [eng, deu, fra, spa, auto_detect]
+
+ai_models:
+  ner_model: spacy_en_core_web_sm
+  classification_model: distilbert-base-uncased
+  summarization_model: facebook/bart-large-cnn
+  custom_model_support: true
+
+data_validation:
+  schema_validation: true
+  data_type_checking: true
+  format_verification: true
+  consistency_checks: true
+
+security:
+  file_scanning: true
+  content_filtering: true
+  pii_detection: true
+  data_anonymization: true
+  temporary_file_cleanup: true
+
+error_handling:
+  corrupted_file: Attempt repair or extract partial content
+  ocr_failure: Try alternative OCR engines
+  large_file: Process in chunks with progress tracking
+  unsupported_format: Convert to supported format if possible

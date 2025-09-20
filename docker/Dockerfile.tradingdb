@@ -1,0 +1,88 @@
+# TradingDB - Financial Trading & Analytics Database
+FROM timescale/timescaledb:latest-pg15
+
+# Install additional extensions for financial data
+RUN apk add --no-cache \
+    postgresql-contrib \
+    python3 \
+    py3-pip \
+    curl \
+    wget \
+    dcron \
+    build-base \
+    python3-dev \
+    openblas-dev \
+    gfortran
+
+# Install Python dependencies for financial data processing
+RUN pip3 install --no-cache-dir --break-system-packages \
+    psycopg2-binary \
+    alembic \
+    sqlalchemy \
+    pandas \
+    numpy \
+    yfinance \
+    alpha-vantage \
+    ccxt \
+    ta \
+    scipy \
+    scikit-learn \
+    plotly
+
+# Copy database initialization scripts for trading data
+COPY database/tradingdb/init/ /docker-entrypoint-initdb.d/
+COPY database/tradingdb/migrations/ /opt/migrations/
+COPY database/tradingdb/data-scripts/ /opt/data-scripts/
+
+# Copy custom TimescaleDB configuration for financial data
+COPY database/tradingdb/postgresql.conf /etc/postgresql/postgresql.conf
+COPY database/tradingdb/pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Copy trading data collection and analysis scripts
+COPY database/tradingdb/collect-market-data.py /usr/local/bin/
+COPY database/tradingdb/calculate-predictions.py /usr/local/bin/
+COPY database/tradingdb/validate-predictions.py /usr/local/bin/
+COPY database/tradingdb/backup-trading-data.sh /usr/local/bin/
+COPY database/tradingdb/bitpanda-sync.py /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/collect-market-data.py && \
+    chmod +x /usr/local/bin/calculate-predictions.py && \
+    chmod +x /usr/local/bin/validate-predictions.py && \
+    chmod +x /usr/local/bin/backup-trading-data.sh && \
+    chmod +x /usr/local/bin/bitpanda-sync.py
+
+# Set up automated data collection and analysis
+RUN mkdir -p /etc/cron.d && \
+    echo "*/5 * * * * /usr/local/bin/collect-market-data.py --realtime" > /etc/cron.d/market-data && \
+    echo "0 */4 * * * /usr/local/bin/collect-market-data.py --historical" >> /etc/cron.d/market-data && \
+    echo "30 2 * * * /usr/local/bin/calculate-predictions.py" >> /etc/cron.d/market-data && \
+    echo "0 3 * * * /usr/local/bin/validate-predictions.py" >> /etc/cron.d/market-data && \
+    echo "0 1 * * * /usr/local/bin/backup-trading-data.sh" >> /etc/cron.d/market-data && \
+    echo "0 */6 * * * /usr/local/bin/bitpanda-sync.py" >> /etc/cron.d/market-data
+
+# Environment variables for trading database
+ENV POSTGRES_DB=tradingdb
+ENV POSTGRES_USER=jarvis_trading
+ENV POSTGRES_PASSWORD_FILE=/run/secrets/postgres_trading_password
+ENV PGDATA=/var/lib/postgresql/data/tradingdb
+ENV BITPANDA_API_KEY_FILE=/run/secrets/bitpanda_api_key
+ENV ALPHA_VANTAGE_API_KEY_FILE=/run/secrets/alpha_vantage_api_key
+ENV HISTORICAL_DATA_YEARS=20
+ENV PREDICTION_HORIZON_DAYS=30
+
+# Create specialized indexes for time-series financial data
+COPY database/tradingdb/create-hypertables.sql /docker-entrypoint-initdb.d/99-create-hypertables.sql
+
+# Health check with financial data validation
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && \
+        python3 -c "import psycopg2; conn=psycopg2.connect(host='localhost', database='$POSTGRES_DB', user='$POSTGRES_USER'); conn.close()" || exit 1
+
+EXPOSE 5436
+
+# Custom entrypoint for trading database
+COPY database/tradingdb/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

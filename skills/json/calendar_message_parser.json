@@ -1,0 +1,362 @@
+{
+  "skill_id": "calendar_message_parser",
+  "name": "AI Calendar Event Parser from Messages",
+  "description": "Intelligent message parser that extracts calendar events from emails, SMS, WhatsApp, Signal, Slack, and Teams messages, automatically schedules them with location enrichment and route planning",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["openai", "spacy", "dateutil", "regex", "googlemaps", "icalendar", "asyncio"],
+  "api_requirements": {
+    "openai_api": {
+      "provider": "openai",
+      "api_key_env_var": "OPENAI_API_KEY",
+      "model": "gpt-4",
+      "context_understanding": true
+    },
+    "message_sources": {
+      "gmail": {
+        "credentials_file": "gmail_credentials.json",
+        "skill_reference": "email_handler"
+      },
+      "outlook": {
+        "credentials_file": "outlook_credentials.json",
+        "skill_reference": "email_handler"
+      },
+      "whatsapp": {
+        "provider": "whatsapp_business_api",
+        "api_key_env_var": "WHATSAPP_API_KEY",
+        "webhook_url": "https://jarvis.local/webhooks/whatsapp"
+      },
+      "signal": {
+        "provider": "signal_cli",
+        "registration_file": "signal_registration.json"
+      },
+      "slack": {
+        "provider": "slack",
+        "bot_token_env_var": "SLACK_BOT_TOKEN",
+        "app_token_env_var": "SLACK_APP_TOKEN"
+      },
+      "teams": {
+        "provider": "microsoft",
+        "tenant_id_env_var": "TEAMS_TENANT_ID",
+        "app_id_env_var": "TEAMS_APP_ID"
+      }
+    },
+    "calendar_integration": {
+      "provider": "internal",
+      "skill_reference": "calendar_sync_manager"
+    },
+    "route_planning": {
+      "provider": "internal",
+      "skill_reference": "intelligent_route_planner"
+    },
+    "contact_database": {
+      "provider": "internal",
+      "skill_reference": "personal_contacts_database"
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["parse_message", "batch_parse", "setup_monitoring", "extract_events", "schedule_events", "update_existing"],
+      "description": "Message parsing action to perform"
+    },
+    "message_input": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "message_text": {"type": "string", "required": true},
+        "message_source": {"type": "string", "enum": ["email", "sms", "whatsapp", "signal", "slack", "teams"], "required": true},
+        "sender": {"type": "string"},
+        "recipient": {"type": "string"},
+        "timestamp": {"type": "string", "format": "datetime"},
+        "message_id": {"type": "string"},
+        "thread_id": {"type": "string"},
+        "attachments": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "parsing_config": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "language": {"type": "string", "default": "de", "enum": ["de", "en", "auto"]},
+        "timezone": {"type": "string", "default": "Europe/Vienna"},
+        "confidence_threshold": {"type": "number", "default": 0.8, "min": 0.0, "max": 1.0},
+        "auto_schedule": {"type": "boolean", "default": false},
+        "require_confirmation": {"type": "boolean", "default": true},
+        "extract_multiple_events": {"type": "boolean", "default": true},
+        "context_awareness": {"type": "boolean", "default": true}
+      }
+    },
+    "calendar_preferences": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "default_calendar": {"type": "string", "default": "primary"},
+        "default_duration": {"type": "integer", "default": 60, "description": "Default meeting duration in minutes"},
+        "buffer_time": {"type": "integer", "default": 15, "description": "Buffer time before/after meetings"},
+        "auto_add_location": {"type": "boolean", "default": true},
+        "auto_add_attendees": {"type": "boolean", "default": true},
+        "auto_add_travel_time": {"type": "boolean", "default": true},
+        "conflict_resolution": {"type": "string", "enum": ["suggest_alternative", "override", "ask_user"], "default": "ask_user"}
+      }
+    },
+    "monitoring_setup": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "enabled_sources": {"type": "array", "items": {"type": "string"}},
+        "real_time_monitoring": {"type": "boolean", "default": true},
+        "batch_processing_interval": {"type": "integer", "default": 300, "description": "Seconds between batch processing"},
+        "keywords_filter": {"type": "array", "items": {"type": "string"}},
+        "sender_whitelist": {"type": "array", "items": {"type": "string"}},
+        "exclude_automated": {"type": "boolean", "default": true}
+      }
+    },
+    "enrichment_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "location_enrichment": {"type": "boolean", "default": true},
+        "contact_linking": {"type": "boolean", "default": true},
+        "route_calculation": {"type": "boolean", "default": true},
+        "weather_integration": {"type": "boolean", "default": false},
+        "document_attachment": {"type": "boolean", "default": true},
+        "meeting_preparation": {"type": "boolean", "default": true}
+      }
+    }
+  },
+  "outputs": {
+    "parsed_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_id": {"type": "string"},
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "start_datetime": {"type": "string", "format": "datetime"},
+          "end_datetime": {"type": "string", "format": "datetime"},
+          "location": {"type": "string"},
+          "attendees": {"type": "array", "items": {"type": "string"}},
+          "confidence_score": {"type": "number"},
+          "source_message": {"type": "string"},
+          "parsing_method": {"type": "string"},
+          "requires_confirmation": {"type": "boolean"}
+        }
+      }
+    },
+    "enriched_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_id": {"type": "string"},
+          "original_event": {"type": "object"},
+          "enrichments": {
+            "type": "object",
+            "properties": {
+              "full_address": {"type": "string"},
+              "coordinates": {"type": "object"},
+              "travel_time": {"type": "object"},
+              "route_details": {"type": "object"},
+              "linked_contacts": {"type": "array"},
+              "meeting_room_suggestions": {"type": "array"},
+              "preparation_notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "scheduling_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_id": {"type": "string"},
+          "scheduled_successfully": {"type": "boolean"},
+          "calendar_event_id": {"type": "string"},
+          "conflicts_detected": {"type": "array"},
+          "alternative_times": {"type": "array"},
+          "travel_events_created": {"type": "array"},
+          "notifications_sent": {"type": "array"}
+        }
+      }
+    },
+    "parsing_analytics": {
+      "type": "object",
+      "properties": {
+        "messages_processed": {"type": "integer"},
+        "events_extracted": {"type": "integer"},
+        "events_scheduled": {"type": "integer"},
+        "confidence_distribution": {"type": "object"},
+        "source_breakdown": {"type": "object"},
+        "parsing_accuracy": {"type": "number"},
+        "common_patterns": {"type": "array"}
+      }
+    },
+    "monitoring_status": {
+      "type": "object",
+      "properties": {
+        "active_monitors": {"type": "array"},
+        "last_check": {"type": "string", "format": "datetime"},
+        "pending_messages": {"type": "integer"},
+        "processing_queue": {"type": "array"},
+        "error_count": {"type": "integer"}
+      }
+    },
+    "validation_report": {
+      "type": "object",
+      "properties": {
+        "validation_results": {"type": "array"},
+        "missing_information": {"type": "array"},
+        "ambiguous_elements": {"type": "array"},
+        "confirmation_required": {"type": "array"},
+        "auto_corrections": {"type": "array"}
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "parse_calendar_messages",
+    "timeout": 300,
+    "retry_attempts": 3,
+    "async_processing": true,
+    "real_time_processing": true
+  },
+  "ai_parsing_engine": {
+    "natural_language_processing": {
+      "named_entity_recognition": true,
+      "temporal_expression_extraction": true,
+      "location_extraction": true,
+      "contact_extraction": true,
+      "intent_classification": true,
+      "context_understanding": true
+    },
+    "pattern_recognition": {
+      "meeting_patterns": true,
+      "appointment_patterns": true,
+      "event_patterns": true,
+      "recurring_patterns": true,
+      "cancellation_patterns": true,
+      "rescheduling_patterns": true
+    },
+    "multilingual_support": {
+      "german": true,
+      "english": true,
+      "mixed_language": true,
+      "dialect_recognition": true,
+      "colloquial_expressions": true
+    }
+  },
+  "message_monitoring": {
+    "real_time_webhooks": {
+      "whatsapp_webhooks": true,
+      "slack_events_api": true,
+      "teams_bot_framework": true,
+      "gmail_push_notifications": true
+    },
+    "polling_mechanisms": {
+      "email_imap_polling": true,
+      "signal_message_polling": true,
+      "sms_polling": true,
+      "configurable_intervals": true
+    },
+    "message_filtering": {
+      "keyword_filtering": true,
+      "sender_filtering": true,
+      "content_type_filtering": true,
+      "priority_scoring": true
+    }
+  },
+  "event_enrichment": {
+    "location_services": {
+      "address_standardization": true,
+      "geocoding": true,
+      "place_suggestions": true,
+      "venue_information": true,
+      "accessibility_info": true
+    },
+    "contact_integration": {
+      "attendee_identification": true,
+      "contact_details_lookup": true,
+      "relationship_mapping": true,
+      "communication_preferences": true
+    },
+    "contextual_enhancement": {
+      "meeting_type_classification": true,
+      "agenda_generation": true,
+      "preparation_suggestions": true,
+      "related_document_linking": true
+    }
+  },
+  "scheduling_intelligence": {
+    "conflict_detection": {
+      "calendar_conflicts": true,
+      "travel_time_conflicts": true,
+      "resource_conflicts": true,
+      "attendee_availability": true
+    },
+    "optimization": {
+      "optimal_timing": true,
+      "location_optimization": true,
+      "travel_minimization": true,
+      "energy_level_consideration": true
+    },
+    "automation": {
+      "automatic_scheduling": true,
+      "conflict_resolution": true,
+      "reminder_setup": true,
+      "follow_up_tracking": true
+    }
+  },
+  "quality_assurance": {
+    "validation_checks": {
+      "date_time_validation": true,
+      "location_validation": true,
+      "attendee_validation": true,
+      "duration_validation": true
+    },
+    "confidence_scoring": {
+      "parsing_confidence": true,
+      "scheduling_confidence": true,
+      "overall_reliability": true,
+      "uncertainty_quantification": true
+    },
+    "human_verification": {
+      "confirmation_workflows": true,
+      "manual_review_triggers": true,
+      "correction_feedback": true,
+      "learning_integration": true
+    }
+  },
+  "privacy_security": {
+    "message_privacy": {
+      "end_to_end_encryption": true,
+      "temporary_storage": true,
+      "automatic_deletion": true,
+      "access_logging": true
+    },
+    "data_protection": {
+      "gdpr_compliance": true,
+      "data_minimization": true,
+      "consent_management": true,
+      "anonymization": true
+    }
+  },
+  "error_handling": {
+    "parsing_failures": "Log failure details and attempt alternative parsing methods",
+    "ambiguous_dates": "Request clarification or suggest most likely interpretation",
+    "missing_information": "Extract available information and mark missing fields for follow-up",
+    "conflicting_information": "Highlight conflicts and request user resolution",
+    "scheduling_conflicts": "Propose alternative times or notify about conflicts",
+    "api_failures": "Use fallback methods and queue for retry when service is restored"
+  },
+  "performance_optimization": {
+    "caching": true,
+    "batch_processing": true,
+    "parallel_processing": true,
+    "smart_polling": true,
+    "resource_optimization": true
+  }
+}

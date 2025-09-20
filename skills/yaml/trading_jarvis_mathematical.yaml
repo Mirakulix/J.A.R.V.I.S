@@ -1,0 +1,690 @@
+skill_id: trading_jarvis_mathematical
+name: Advanced Trading JARVIS with Mathematical Models
+description: Comprehensive trading system with PhD-level mathematical models, quantitative analysis, risk management, market simulations, tax optimization, and portfolio financing calculations for professional-grade investment decisions
+category: complex
+version: 1.0.0
+dependencies:
+  - numpy
+  - scipy
+  - pandas
+  - scikit-learn
+  - tensorflow
+  - pytorch
+  - quantlib
+  - zipline
+  - backtrader
+  - yfinance
+  - alpha_vantage
+  - ccxt
+  - matplotlib
+  - plotly
+  - dash
+  - fastapi
+  - asyncio
+  - numba
+  - cvxpy
+  - pyportfolioopt
+  - ta-lib
+  - arch
+  - statsmodels
+
+api_requirements:
+  market_data_providers:
+    alpha_vantage:
+      provider: alpha_vantage
+      api_key_env_var: ALPHA_VANTAGE_API_KEY
+      rate_limit: 5_requests_per_minute
+      data_types: [stocks, forex, crypto, fundamentals, economics]
+    yahoo_finance:
+      provider: yfinance
+      free_tier: true
+      data_types: [stocks, etfs, options, futures]
+    binance:
+      provider: ccxt
+      api_key_env_var: BINANCE_API_KEY
+      api_secret_env_var: BINANCE_API_SECRET
+      sandbox_mode: true
+    interactive_brokers:
+      provider: ib_insync
+      gateway_port: 4002
+      paper_trading: true
+    bitpanda:
+      provider: ccxt
+      api_key_env_var: BITPANDA_API_KEY
+      region: austria
+  mathematical_libraries:
+    quantlib:
+      provider: quantlib_python
+      pricing_models: true
+      risk_analytics: true
+    tensorflow:
+      provider: tensorflow
+      gpu_acceleration: true
+      model_types: [lstm, transformer, gan]
+    scipy_optimization:
+      provider: scipy
+      optimization_algorithms: [slsqp, cobyla, trust_region]
+  database_integration:
+    timescaledb:
+      provider: internal
+      skill_reference: tradingdb_container
+      time_series_optimization: true
+    vectordb:
+      provider: internal
+      skill_reference: vectordb_container
+      similarity_search: true
+  tax_calculation:
+    austrian_tax_system:
+      kest_calculation: true
+      verlustverrechnung: true
+      haltefrist_rules: true
+    international_tax:
+      double_taxation_agreements: true
+      withholding_tax: true
+
+inputs:
+  action:
+    type: string
+    required: true
+    allowed_values: [market_analysis, portfolio_optimization, risk_assessment, backtesting, live_trading, tax_calculation, simulation_monte_carlo, options_pricing, arbitrage_detection, sentiment_analysis, mathematical_modeling, performance_attribution]
+    description: Trading analysis action to perform
+  portfolio_config:
+    type: object
+    required: false
+    properties:
+      initial_capital:
+        type: number
+        required: true
+        min: 1000
+      currency:
+        type: string
+        default: EUR
+        enum: [EUR, USD, CHF, GBP]
+      risk_tolerance:
+        type: string
+        enum: [conservative, moderate, aggressive, quantitative]
+        default: moderate
+      investment_horizon:
+        type: string
+        enum: [short_term, medium_term, long_term]
+        default: medium_term
+      asset_classes:
+        type: array
+        items:
+          type: string
+          enum: [stocks, bonds, crypto, commodities, forex, derivatives, reits]
+        default: [stocks, bonds]
+      geographical_allocation:
+        type: object
+        properties:
+          europe:
+            type: number
+          north_america:
+            type: number
+          asia:
+            type: number
+          emerging_markets:
+            type: number
+      leverage_allowed:
+        type: boolean
+        default: false
+      max_leverage:
+        type: number
+        default: 1.0
+        max: 10.0
+      rebalancing_frequency:
+        type: string
+        enum: [daily, weekly, monthly, quarterly]
+        default: monthly
+  mathematical_models:
+    type: object
+    required: false
+    properties:
+      pricing_models:
+        type: array
+        items:
+          type: string
+          enum: [black_scholes, monte_carlo, binomial_tree, trinomial_tree, finite_difference, heston_model, jump_diffusion]
+        default: [black_scholes, monte_carlo]
+      risk_models:
+        type: array
+        items:
+          type: string
+          enum: [var_historical, var_parametric, var_monte_carlo, cvar, maximum_drawdown, sharpe_ratio, sortino_ratio, calmar_ratio]
+        default: [var_historical, cvar, maximum_drawdown]
+      optimization_methods:
+        type: array
+        items:
+          type: string
+          enum: [markowitz, black_litterman, risk_parity, mean_reversion, momentum, factor_models, machine_learning]
+        default: [markowitz, risk_parity]
+      time_series_models:
+        type: array
+        items:
+          type: string
+          enum: [arima, garch, lstm, transformer, var_vector, cointegration, kalman_filter]
+        default: [arima, garch]
+      machine_learning_models:
+        type: array
+        items:
+          type: string
+          enum: [random_forest, xgboost, neural_networks, svm, reinforcement_learning, gan, autoencoder]
+        default: [random_forest, neural_networks]
+  market_analysis_config:
+    type: object
+    required: false
+    properties:
+      technical_indicators:
+        type: array
+        items:
+          type: string
+        default: [sma, ema, rsi, macd, bollinger_bands, fibonacci, ichimoku]
+      fundamental_analysis:
+        type: boolean
+        default: true
+      sentiment_analysis:
+        type: boolean
+        default: true
+      macroeconomic_factors:
+        type: boolean
+        default: true
+      correlation_analysis:
+        type: boolean
+        default: true
+      volatility_clustering:
+        type: boolean
+        default: true
+      regime_detection:
+        type: boolean
+        default: true
+  backtesting_parameters:
+    type: object
+    required: false
+    properties:
+      start_date:
+        type: string
+        format: date
+        required: true
+      end_date:
+        type: string
+        format: date
+        required: true
+      benchmark:
+        type: string
+        default: SPY
+      transaction_costs:
+        type: number
+        default: 0.001
+        description: As decimal (0.1% = 0.001)
+      slippage_model:
+        type: string
+        enum: [linear, square_root, none]
+        default: linear
+      commission_structure:
+        type: object
+      market_impact:
+        type: boolean
+        default: true
+      walk_forward_analysis:
+        type: boolean
+        default: false
+      monte_carlo_iterations:
+        type: integer
+        default: 1000
+        min: 100
+        max: 10000
+  risk_management:
+    type: object
+    required: false
+    properties:
+      max_position_size:
+        type: number
+        default: 0.05
+        description: Maximum position as % of portfolio
+      stop_loss_percentage:
+        type: number
+        default: 0.02
+      take_profit_percentage:
+        type: number
+        default: 0.06
+      max_daily_loss:
+        type: number
+        default: 0.02
+      max_portfolio_var:
+        type: number
+        default: 0.05
+        description: 95% VaR limit
+      correlation_limit:
+        type: number
+        default: 0.7
+      sector_concentration_limit:
+        type: number
+        default: 0.25
+      dynamic_hedging:
+        type: boolean
+        default: false
+      tail_risk_hedging:
+        type: boolean
+        default: false
+  tax_optimization:
+    type: object
+    required: false
+    properties:
+      tax_jurisdiction:
+        type: string
+        default: austria
+      tax_loss_harvesting:
+        type: boolean
+        default: true
+      holding_period_optimization:
+        type: boolean
+        default: true
+      asset_location_optimization:
+        type: boolean
+        default: true
+      retirement_accounts:
+        type: array
+        items:
+          type: string
+      tax_efficient_funds:
+        type: boolean
+        default: true
+  execution_parameters:
+    type: object
+    required: false
+    properties:
+      order_types:
+        type: array
+        items:
+          type: string
+          enum: [market, limit, stop, stop_limit, twap, vwap]
+        default: [limit]
+      execution_algorithms:
+        type: array
+        items:
+          type: string
+          enum: [twap, vwap, implementation_shortfall, participation_rate]
+        default: [twap]
+      minimum_order_size:
+        type: number
+        default: 100
+      maximum_order_size:
+        type: number
+        default: 10000
+      order_splitting:
+        type: boolean
+        default: true
+      dark_pools:
+        type: boolean
+        default: false
+      smart_order_routing:
+        type: boolean
+        default: true
+
+outputs:
+  portfolio_analysis:
+    type: object
+    properties:
+      current_allocation:
+        type: object
+      recommended_allocation:
+        type: object
+      rebalancing_trades:
+        type: array
+      expected_return:
+        type: number
+      expected_volatility:
+        type: number
+      sharpe_ratio:
+        type: number
+      maximum_drawdown:
+        type: number
+      var_95:
+        type: number
+      cvar_95:
+        type: number
+      correlation_matrix:
+        type: array
+      factor_exposures:
+        type: object
+  mathematical_calculations:
+    type: object
+    properties:
+      option_prices:
+        type: object
+      greeks:
+        type: object
+      implied_volatilities:
+        type: array
+      monte_carlo_simulations:
+        type: object
+      statistical_arbitrage:
+        type: array
+      mean_reversion_signals:
+        type: array
+      momentum_indicators:
+        type: object
+      regime_probabilities:
+        type: object
+  risk_metrics:
+    type: object
+    properties:
+      portfolio_var:
+        type: number
+      portfolio_cvar:
+        type: number
+      component_var:
+        type: object
+      marginal_var:
+        type: object
+      stress_test_results:
+        type: array
+      scenario_analysis:
+        type: object
+      risk_attribution:
+        type: object
+      liquidity_risk:
+        type: object
+      counterparty_risk:
+        type: object
+  backtesting_results:
+    type: object
+    properties:
+      total_return:
+        type: number
+      annualized_return:
+        type: number
+      volatility:
+        type: number
+      sharpe_ratio:
+        type: number
+      sortino_ratio:
+        type: number
+      calmar_ratio:
+        type: number
+      maximum_drawdown:
+        type: number
+      win_rate:
+        type: number
+      profit_factor:
+        type: number
+      trade_statistics:
+        type: object
+      monthly_returns:
+        type: array
+      benchmark_comparison:
+        type: object
+  trading_signals:
+    type: array
+    items:
+      type: object
+      properties:
+        symbol:
+          type: string
+        signal_type:
+          type: string
+          enum: [buy, sell, hold]
+        confidence:
+          type: number
+        target_price:
+          type: number
+        stop_loss:
+          type: number
+        position_size:
+          type: number
+        reasoning:
+          type: string
+        risk_reward_ratio:
+          type: number
+        time_horizon:
+          type: string
+  tax_calculations:
+    type: object
+    properties:
+      kest_liability:
+        type: number
+      realized_gains_losses:
+        type: object
+      unrealized_gains_losses:
+        type: object
+      tax_loss_harvesting_opportunities:
+        type: array
+      optimal_realization_schedule:
+        type: array
+      net_tax_impact:
+        type: number
+      tax_efficiency_score:
+        type: number
+  market_forecasts:
+    type: object
+    properties:
+      price_predictions:
+        type: object
+      volatility_forecasts:
+        type: object
+      correlation_forecasts:
+        type: object
+      regime_predictions:
+        type: object
+      economic_indicators:
+        type: object
+      sentiment_scores:
+        type: object
+      forecast_confidence:
+        type: object
+  execution_plan:
+    type: object
+    properties:
+      trade_orders:
+        type: array
+      execution_schedule:
+        type: object
+      estimated_costs:
+        type: object
+      market_impact_estimate:
+        type: number
+      optimal_timing:
+        type: object
+      liquidity_analysis:
+        type: object
+  performance_attribution:
+    type: object
+    properties:
+      asset_allocation_effect:
+        type: number
+      security_selection_effect:
+        type: number
+      currency_effect:
+        type: number
+      sector_allocation:
+        type: object
+      factor_contributions:
+        type: object
+      alpha_beta_decomposition:
+        type: object
+
+execution:
+  type: python_function
+  entry_point: execute_trading_analysis
+  timeout: 600
+  retry_attempts: 3
+  async_processing: true
+  gpu_acceleration: true
+  parallel_processing: true
+
+mathematical_models:
+  option_pricing:
+    black_scholes:
+      european_options: true
+      american_options: false
+      exotic_options: true
+      greeks_calculation: true
+      implied_volatility: true
+    monte_carlo:
+      path_dependent_options: true
+      barrier_options: true
+      asian_options: true
+      variance_reduction: true
+      quasi_random_numbers: true
+    binomial_trees:
+      american_options: true
+      dividend_adjustments: true
+      early_exercise: true
+      convergence_acceleration: true
+    stochastic_models:
+      heston_model: true
+      vasicek_model: true
+      cox_ingersoll_ross: true
+      jump_diffusion: true
+  portfolio_optimization:
+    markowitz_optimization:
+      mean_variance: true
+      efficient_frontier: true
+      risk_budgeting: true
+      constraints_handling: true
+    black_litterman:
+      bayesian_framework: true
+      view_incorporation: true
+      uncertainty_quantification: true
+      shrinkage_estimators: true
+    risk_parity:
+      equal_risk_contribution: true
+      hierarchical_clustering: true
+      machine_learning_clustering: true
+      dynamic_rebalancing: true
+    factor_models:
+      fama_french: true
+      principal_component_analysis: true
+      independent_component_analysis: true
+      dynamic_factor_models: true
+  risk_modeling:
+    value_at_risk:
+      historical_simulation: true
+      parametric_var: true
+      monte_carlo_var: true
+      extreme_value_theory: true
+    stress_testing:
+      scenario_analysis: true
+      monte_carlo_stress: true
+      historical_stress: true
+      tail_risk_measures: true
+    copula_models:
+      gaussian_copula: true
+      t_copula: true
+      archimedean_copulas: true
+      vine_copulas: true
+  time_series_analysis:
+    univariate_models:
+      arima: true
+      garch: true
+      exponential_smoothing: true
+      state_space_models: true
+    multivariate_models:
+      vector_autoregression: true
+      vector_error_correction: true
+      dynamic_conditional_correlation: true
+      factor_augmented_var: true
+    machine_learning:
+      lstm_networks: true
+      transformer_models: true
+      gaussian_processes: true
+      ensemble_methods: true
+
+advanced_analytics:
+  market_microstructure:
+    order_book_analysis: true
+    price_impact_models: true
+    liquidity_measures: true
+    high_frequency_patterns: true
+  alternative_data:
+    sentiment_analysis: true
+    news_analytics: true
+    social_media_signals: true
+    satellite_data: true
+  machine_learning:
+    feature_engineering: true
+    model_selection: true
+    hyperparameter_optimization: true
+    ensemble_methods: true
+    reinforcement_learning: true
+  behavioral_finance:
+    momentum_strategies: true
+    mean_reversion: true
+    herding_detection: true
+    sentiment_indicators: true
+
+regulatory_compliance:
+  austrian_regulations:
+    kag_compliance: true
+    oenb_reporting: true
+    fma_requirements: true
+    mifid_ii: true
+  risk_management:
+    ucits_limits: true
+    aifmd_compliance: true
+    var_reporting: true
+    stress_testing: true
+  tax_compliance:
+    kest_calculation: true
+    withholding_tax: true
+    double_taxation: true
+    loss_offset: true
+
+data_management:
+  real_time_data:
+    streaming_prices: true
+    order_book_data: true
+    news_feeds: true
+    economic_data: true
+  historical_data:
+    price_history: true
+    fundamental_data: true
+    alternative_data: true
+    backtesting_datasets: true
+  data_quality:
+    outlier_detection: true
+    missing_data_handling: true
+    data_validation: true
+    survivorship_bias: true
+
+performance_optimization:
+  computational_efficiency:
+    numba_acceleration: true
+    cython_optimization: true
+    gpu_computing: true
+    parallel_processing: true
+  memory_management:
+    data_streaming: true
+    chunked_processing: true
+    memory_mapping: true
+    garbage_collection: true
+  caching:
+    result_caching: true
+    data_caching: true
+    model_caching: true
+    computation_memoization: true
+
+error_handling:
+  data_errors: Handle missing data with interpolation, forward-fill, or model-based imputation
+  model_convergence: Use alternative optimization algorithms and regularization techniques
+  market_data_delays: Use cached data with staleness indicators and alternative sources
+  execution_failures: Implement order splitting, alternative venues, and manual intervention
+  risk_limit_breaches: Automatic position reduction and risk management protocols
+  api_rate_limits: Implement request queuing, caching, and multiple data sources
+
+integration_capabilities:
+  trading_platforms:
+    interactive_brokers: true
+    ninjatrader: true
+    tradingview: true
+    metatrader: true
+  data_vendors:
+    bloomberg: false
+    refinitiv: false
+    alpha_vantage: true
+    yahoo_finance: true
+  execution_venues:
+    traditional_exchanges: true
+    dark_pools: false
+    cryptocurrency_exchanges: true
+    forex_brokers: true

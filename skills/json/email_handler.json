@@ -1,0 +1,133 @@
+{
+  "skill_id": "email_handler",
+  "name": "Unified Email Management System",
+  "description": "Manages emails across multiple providers (Gmail, Outlook) with advanced filtering, scheduling, and automation",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["google-api-python-client", "exchangelib", "email", "datetime", "nltk"],
+  "api_requirements": {
+    "gmail_api": {
+      "provider": "google",
+      "credentials_file": "gmail_credentials.json",
+      "scopes": ["https://www.googleapis.com/auth/gmail.modify"],
+      "oauth2_required": true
+    },
+    "outlook_api": {
+      "provider": "microsoft",
+      "client_id_env_var": "OUTLOOK_CLIENT_ID",
+      "client_secret_env_var": "OUTLOOK_CLIENT_SECRET",
+      "tenant_id_env_var": "OUTLOOK_TENANT_ID"
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["send", "receive", "filter", "schedule", "auto_reply", "organize"],
+      "description": "Email action to perform"
+    },
+    "email_providers": {
+      "type": "array",
+      "required": false,
+      "default": ["gmail"],
+      "items": {"type": "string", "enum": ["gmail", "outlook"]},
+      "description": "Email providers to use"
+    },
+    "send_params": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "to": {"type": "array", "items": {"type": "string"}},
+        "cc": {"type": "array", "items": {"type": "string"}},
+        "subject": {"type": "string"},
+        "body": {"type": "string"},
+        "attachments": {"type": "array", "items": {"type": "string"}},
+        "priority": {"type": "string", "enum": ["low", "normal", "high"]},
+        "delivery_time": {"type": "string", "format": "datetime"}
+      }
+    },
+    "filter_criteria": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "sender": {"type": "string"},
+        "subject_contains": {"type": "string"},
+        "date_range": {"type": "object"},
+        "has_attachments": {"type": "boolean"},
+        "importance": {"type": "string"},
+        "unread_only": {"type": "boolean"}
+      }
+    },
+    "auto_reply_config": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "message_template": {"type": "string"},
+        "conditions": {"type": "array"},
+        "exclude_contacts": {"type": "array"}
+      }
+    }
+  },
+  "outputs": {
+    "emails": {
+      "type": "array",
+      "description": "Retrieved or processed emails",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "sender": {"type": "string"},
+          "recipient": {"type": "string"},
+          "subject": {"type": "string"},
+          "body_preview": {"type": "string"},
+          "date": {"type": "string"},
+          "has_attachments": {"type": "boolean"},
+          "importance": {"type": "string"},
+          "provider": {"type": "string"}
+        }
+      }
+    },
+    "send_status": {
+      "type": "object",
+      "properties": {
+        "success": {"type": "boolean"},
+        "message_id": {"type": "string"},
+        "scheduled_time": {"type": "string"}
+      }
+    },
+    "organization_summary": {
+      "type": "object",
+      "properties": {
+        "emails_processed": {"type": "integer"},
+        "folders_created": {"type": "integer"},
+        "rules_applied": {"type": "integer"}
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "handle_emails",
+    "timeout": 180,
+    "retry_attempts": 3,
+    "async_processing": true
+  },
+  "ai_features": {
+    "sentiment_analysis": true,
+    "spam_detection": true,
+    "priority_classification": true,
+    "auto_categorization": true,
+    "smart_replies": true
+  },
+  "security": {
+    "encryption_at_rest": true,
+    "secure_token_storage": true,
+    "audit_logging": true,
+    "data_retention_policy": "30_days"
+  },
+  "calendar_integration": {
+    "extract_meeting_requests": true,
+    "auto_schedule_availability": true,
+    "conflict_detection": true
+  }
+}

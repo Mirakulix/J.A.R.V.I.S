@@ -1,0 +1,156 @@
+# Android Emulator Container with Advanced Automation
+# Note: This image is x86_64 only - on ARM64 systems, use --platform linux/amd64 or substitute with ARM-compatible base
+FROM --platform=linux/amd64 budtmo/docker-android:emulator_13.0
+
+# Maintainer Information
+LABEL maintainer="JARVIS Team"
+LABEL description="Android Emulator with AI-powered automation capabilities"
+LABEL version="1.0.0"
+
+# Environment Variables
+ENV ANDROID_HOME=/opt/android
+ENV ANDROID_SDK_ROOT=$ANDROID_HOME
+ENV PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+ENV DEVICE="Samsung Galaxy S10"
+ENV ANDROID_ARCH=x86_64
+ENV ANDROID_API_LEVEL=33
+ENV EMULATOR_TIMEOUT=300
+ENV APPIUM_HOST=0.0.0.0
+ENV APPIUM_PORT=4723
+ENV VNC_PORT=6080
+ENV NOVNC_PORT=6080
+
+# System Dependencies
+USER root
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    nodejs \
+    npm \
+    curl \
+    wget \
+    unzip \
+    git \
+    build-essential \
+    ffmpeg \
+    x11vnc \
+    xvfb \
+    fluxbox \
+    novnc \
+    websockify \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Latest Appium
+RUN npm install -g appium@next \
+    && npm install -g appium-doctor \
+    && appium driver install uiautomator2 \
+    && appium driver install xcuitest \
+    && appium plugin install images \
+    && appium plugin install element-wait
+
+# Python Dependencies for AI and Automation
+COPY requirements-android.txt /tmp/requirements-android.txt
+RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-android.txt
+
+# Create Virtual Environment for Isolated Testing
+RUN python3 -m venv /opt/android-automation
+ENV PATH="/opt/android-automation/bin:$PATH"
+
+# Install Python Automation Libraries
+RUN /opt/android-automation/bin/pip install --no-cache-dir \
+    appium-python-client \
+    selenium \
+    pytest \
+    pytest-xdist \
+    pytest-html \
+    allure-pytest \
+    opencv-python-headless \
+    pillow \
+    numpy \
+    pandas \
+    requests \
+    adb-shell \
+    uiautomator2 \
+    pure-python-adb \
+    pydantic \
+    fastapi \
+    uvicorn \
+    websockets \
+    asyncio \
+    openai \
+    google-cloud-vision
+
+# Create Application Directories
+RUN mkdir -p /app/android-automation \
+    /app/test-results \
+    /app/screenshots \
+    /app/videos \
+    /app/logs \
+    /app/apks \
+    /app/scripts \
+    /opt/emulator-data \
+    /opt/backup
+
+# Copy Android Automation Scripts and Skills
+COPY skills/json/android_emulator_automation.json /app/skills/
+COPY skills/yaml/android_emulator_automation.yaml /app/skills/
+COPY scripts/android-automation/ /app/scripts/
+
+# Android Emulator Configuration
+COPY docker/android-config/config.ini /root/.android/avd/
+COPY docker/android-config/emulator-config.txt /opt/android/
+
+# Supervisor Configuration for Multi-Process Management
+COPY docker/android-config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Set up VNC and noVNC for Remote Access
+RUN mkdir -p /opt/noVNC/utils/websockify \
+    && ln -s /usr/share/novnc/vnc.html /opt/noVNC/index.html
+
+# Android Automation API Server
+COPY docker/android-automation-server.py /app/
+RUN chmod +x /app/android-automation-server.py
+
+# Health Check Scripts
+COPY docker/android-healthcheck.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/android-healthcheck.sh
+
+# Performance Monitoring Scripts
+COPY docker/android-monitor.py /app/
+RUN chmod +x /app/android-monitor.py
+
+# ADB Server Configuration
+RUN mkdir -p /opt/adb-server
+COPY docker/android-config/adb-setup.sh /opt/adb-server/
+RUN chmod +x /opt/adb-server/adb-setup.sh
+
+# Set Correct Permissions
+RUN chown -R android:android /app /opt/emulator-data /opt/backup
+RUN chmod -R 755 /app/scripts
+
+# Create Android User for Security
+USER android
+
+# Working Directory
+WORKDIR /app
+
+# Expose Ports
+# 4723: Appium Server
+# 5554: Android ADB
+# 5555: Android Console
+# 6080: VNC/noVNC Web Interface
+# 8080: Android Automation API
+# 9090: Performance Metrics
+EXPOSE 4723 5554 5555 6080 8080 9090
+
+# Health Check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /usr/local/bin/android-healthcheck.sh
+
+# Volume Mounts
+VOLUME ["/app/test-results", "/app/screenshots", "/app/videos", "/app/logs", "/app/apks", "/opt/emulator-data"]
+
+# Startup Command with Supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

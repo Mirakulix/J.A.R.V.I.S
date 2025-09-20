@@ -1,0 +1,588 @@
+services:
+  # ===========================================
+  # JARVIS Application Services
+  # ===========================================
+  
+  jarvis-frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: jarvis-frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - JARVIS_CORE_URL=http://jarvis-core:8000
+      - NODE_ENV=production
+    depends_on:
+      - jarvis-core
+    networks:
+      - jarvis-frontend-net
+      - jarvis-internal-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  jarvis-core:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.core
+    container_name: jarvis-core
+    ports:
+      - "8000:8000"
+      - "50051:50051"
+    environment:
+      - POSTGRES_PERSONS_URL=postgresql://jarvis_persons:${POSTGRES_PERSONS_PASSWORD}@jarvis-personendb:5432/personendb
+      - POSTGRES_ORG_URL=postgresql://jarvis_org:${POSTGRES_ORG_PASSWORD}@jarvis-organisationdb:5433/organisationdb
+      - POSTGRES_MEDICAL_URL=postgresql://jarvis_medical:${POSTGRES_MEDICAL_PASSWORD}@jarvis-medizindb:5434/medizindb
+      - POSTGRES_TRADING_URL=postgresql://jarvis_trading:${POSTGRES_TRADING_PASSWORD}@jarvis-tradingdb:5436/tradingdb
+      - CHROMA_URL=http://jarvis-vectordb:8000
+      - REDIS_URL=redis://jarvis-redis:6379
+      - ONEPASSWORD_SERVICE_ACCOUNT_TOKEN_FILE=/run/secrets/onepassword_token
+      - CLAUDE_CODE_API_KEY_FILE=/run/secrets/claude_code_api_key
+    volumes:
+      - jarvis-core-data:/app/data
+      - jarvis-core-logs:/app/logs
+      - jarvis-core-config:/app/config
+    secrets:
+      - onepassword_token
+      - claude_code_api_key
+      - postgres_persons_password
+      - postgres_org_password
+      - postgres_medical_password
+      - postgres_trading_password
+    depends_on:
+      - jarvis-personendb
+      - jarvis-organisationdb
+      - jarvis-vectordb
+      - jarvis-redis
+    networks:
+      - jarvis-internal-net
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  jarvis-connector:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.connector
+    container_name: jarvis-connector
+    environment:
+      - POSTGRES_ORG_URL=postgresql://jarvis_org:${POSTGRES_ORG_PASSWORD}@jarvis-organisationdb:5433/organisationdb
+      - GOOGLE_CREDENTIALS_FILE=/run/secrets/google_credentials
+      - OUTLOOK_CLIENT_ID_FILE=/run/secrets/outlook_client_id
+      - OUTLOOK_CLIENT_SECRET_FILE=/run/secrets/outlook_client_secret
+    secrets:
+      - google_credentials
+      - outlook_client_id
+      - outlook_client_secret
+      - postgres_org_password
+    depends_on:
+      - jarvis-organisationdb
+      - jarvis-core
+    networks:
+      - jarvis-internal-net
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  jarvis-functions:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.functions
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    environment:
+      - POSTGRES_TEMP_URL=postgresql://jarvis_temp:temp_development_only@jarvis-temporarydb:5435/temporarydb
+      - CHROMA_URL=http://jarvis-vectordb:8000
+      - REDIS_URL=redis://jarvis-redis:6379
+    volumes:
+      - jarvis-functions-sandbox:/app/sandbox
+      - jarvis-functions-temp:/app/temp
+    depends_on:
+      - jarvis-core
+      - jarvis-vectordb
+      - jarvis-temporarydb
+    networks:
+      - jarvis-internal-net
+      - jarvis-db-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+
+  jarvis-code:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.code
+    container_name: jarvis-code
+    environment:
+      - CLAUDE_CODE_API_KEY_FILE=/run/secrets/claude_code_api_key
+      - GITHUB_TOKEN_FILE=/run/secrets/github_token
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - jarvis-code-workspace:/app/workspace
+      - jarvis-code-repos:/app/git_repos
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    secrets:
+      - claude_code_api_key
+      - github_token
+    depends_on:
+      - jarvis-core
+      - jarvis-test
+    networks:
+      - jarvis-internal-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  jarvis-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+    container_name: jarvis-test
+    environment:
+      - POSTGRES_TEMP_URL=postgresql://jarvis_temp:temp_development_only@jarvis-temporarydb:5435/temporarydb
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - jarvis-test-results:/app/test_results
+      - jarvis-test-coverage:/app/coverage
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - jarvis-temporarydb
+    networks:
+      - jarvis-internal-net
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '1.5'
+
+  jarvis-monitor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.monitor
+    container_name: jarvis-monitor
+    ports:
+      - "9090:9090"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - PROMETHEUS_RETENTION_TIME=30d
+    volumes:
+      - jarvis-monitor-metrics:/app/metrics
+      - jarvis-monitor-logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - jarvis-internal-net
+      - jarvis-monitoring-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # jarvis-android:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.android
+  #   platform: linux/amd64  # Required for Android emulator - may have performance issues on ARM64
+  #   container_name: jarvis-android
+  #   ports:
+  #     - "4723:4723"    # Appium Server
+  #     - "5554:5554"    # ADB Port
+  #     - "5555:5555"    # ADB Console
+  #     - "6080:6080"    # VNC/noVNC Web Interface
+  #     - "8081:8080"    # Android Automation API
+  #     - "9091:9090"    # Android Performance Metrics
+  #   environment:
+  #     - DEVICE=Samsung Galaxy S10
+  #     - ANDROID_ARCH=x86_64
+  #     - ANDROID_API_LEVEL=33
+  #     - EMULATOR_TIMEOUT=300
+  #     - APPIUM_HOST=0.0.0.0
+  #     - APPIUM_PORT=4723
+  #     - VNC_PORT=6080
+  #     - DISPLAY=:99
+  #   volumes:
+  #     - jarvis-android-data:/opt/emulator-data
+  #     - jarvis-android-screenshots:/app/screenshots
+  #     - jarvis-android-videos:/app/videos
+  #     - jarvis-android-logs:/app/logs
+  #     - jarvis-android-apks:/app/apks
+  #     - jarvis-android-results:/app/test-results
+  #     - jarvis-android-backup:/opt/backup
+  #   privileged: true
+  #   devices:
+  #     - /dev/kvm:/dev/kvm
+  #   depends_on:
+  #     - jarvis-core
+  #   networks:
+  #     - jarvis-internal-net
+  #     - jarvis-monitoring-net
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 8G
+  #         cpus: '4.0'
+  #       reservations:
+  #         memory: 4G
+  #         cpus: '2.0'
+  #   healthcheck:
+  #     test: ["CMD", "/usr/local/bin/android-healthcheck.sh"]
+  #     interval: 60s
+  #     timeout: 30s
+  #     start_period: 120s
+  #     retries: 3
+
+  # ===========================================
+  # Database Services
+  # ===========================================
+
+  jarvis-personendb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.personendb
+    container_name: jarvis-personendb
+    environment:
+      - POSTGRES_DB=personendb
+      - POSTGRES_USER=jarvis_persons
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_persons_password
+    volumes:
+      - jarvis-personendb-data:/var/lib/postgresql/data
+      - jarvis-personendb-backups:/opt/backup
+    secrets:
+      - postgres_persons_password
+    networks:
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  jarvis-organisationdb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.organisationdb
+    container_name: jarvis-organisationdb
+    environment:
+      - POSTGRES_DB=organisationdb
+      - POSTGRES_USER=jarvis_org
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_org_password
+      - TZ=Europe/Vienna
+    volumes:
+      - jarvis-organisationdb-data:/var/lib/postgresql/data
+      - jarvis-organisationdb-backups:/opt/backup
+    secrets:
+      - postgres_org_password
+    networks:
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '1.5'
+
+  jarvis-medizindb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.medizindb
+    container_name: jarvis-medizindb
+    environment:
+      - POSTGRES_DB=medizindb
+      - POSTGRES_USER=jarvis_medical
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_medical_password
+      - MEDICAL_ENCRYPTION_KEY_FILE=/run/secrets/medical_encryption_key
+      - GDPR_COMPLIANCE=true
+    volumes:
+      - jarvis-medizindb-data:/var/lib/postgresql/data
+      - jarvis-medizindb-backups:/opt/backup
+    secrets:
+      - postgres_medical_password
+      - medical_encryption_key
+    networks:
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  jarvis-temporarydb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.temporarydb
+    container_name: jarvis-temporarydb
+    environment:
+      - POSTGRES_DB=temporarydb
+      - POSTGRES_USER=jarvis_temp
+      - POSTGRES_PASSWORD=temp_development_only
+      - AUTO_CLEANUP_DAYS=7
+    volumes:
+      - jarvis-temporarydb-data:/var/lib/postgresql/data
+    networks:
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  jarvis-vectordb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vectordb
+    container_name: jarvis-vectordb
+    environment:
+      - CHROMA_HOST=0.0.0.0
+      - CHROMA_PORT=8000
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+    volumes:
+      - jarvis-vectordb-data:/opt/chroma/data
+      - jarvis-vectordb-embeddings:/opt/chroma/embeddings
+      - jarvis-vectordb-backups:/opt/chroma/backups
+    networks:
+      - jarvis-db-net
+      - jarvis-internal-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  jarvis-tradingdb:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.tradingdb
+    container_name: jarvis-tradingdb
+    environment:
+      - POSTGRES_DB=tradingdb
+      - POSTGRES_USER=jarvis_trading
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_trading_password
+      - BITPANDA_API_KEY_FILE=/run/secrets/bitpanda_api_key
+      - ALPHA_VANTAGE_API_KEY_FILE=/run/secrets/alpha_vantage_api_key
+      - HISTORICAL_DATA_YEARS=20
+      - PREDICTION_HORIZON_DAYS=30
+    volumes:
+      - jarvis-tradingdb-data:/var/lib/postgresql/data
+      - jarvis-tradingdb-backups:/opt/backup
+    secrets:
+      - postgres_trading_password
+      - bitpanda_api_key
+      - alpha_vantage_api_key
+    networks:
+      - jarvis-db-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  # ===========================================
+  # Supporting Services
+  # ===========================================
+
+  jarvis-redis:
+    image: redis:7-alpine
+    container_name: jarvis-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - jarvis-redis-data:/data
+    networks:
+      - jarvis-internal-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  jarvis-nginx:
+    image: nginx:alpine
+    container_name: jarvis-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - jarvis-nginx-logs:/var/log/nginx
+    depends_on:
+      - jarvis-frontend
+      - jarvis-core
+    networks:
+      - jarvis-frontend-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  jarvis-frontend-net:
+    driver: bridge
+    name: jarvis-frontend
+    
+  jarvis-internal-net:
+    driver: bridge
+    name: jarvis-internal
+    internal: false
+    
+  jarvis-db-net:
+    driver: bridge
+    name: jarvis-database
+    internal: true
+    
+  jarvis-monitoring-net:
+    driver: bridge
+    name: jarvis-monitoring
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  # Application Data
+  jarvis-core-data:
+    name: jarvis-core-data
+  jarvis-core-logs:
+    name: jarvis-core-logs
+  jarvis-core-config:
+    name: jarvis-core-config
+  jarvis-functions-sandbox:
+    name: jarvis-functions-sandbox
+  jarvis-functions-temp:
+    name: jarvis-functions-temp
+  jarvis-code-workspace:
+    name: jarvis-code-workspace
+  jarvis-code-repos:
+    name: jarvis-code-repos
+  jarvis-test-results:
+    name: jarvis-test-results
+  jarvis-test-coverage:
+    name: jarvis-test-coverage
+  jarvis-monitor-metrics:
+    name: jarvis-monitor-metrics
+  jarvis-monitor-logs:
+    name: jarvis-monitor-logs
+  
+  # Database Data
+  jarvis-personendb-data:
+    name: jarvis-personendb-data
+  jarvis-personendb-backups:
+    name: jarvis-personendb-backups
+  jarvis-organisationdb-data:
+    name: jarvis-organisationdb-data
+  jarvis-organisationdb-backups:
+    name: jarvis-organisationdb-backups
+  jarvis-medizindb-data:
+    name: jarvis-medizindb-data
+  jarvis-medizindb-backups:
+    name: jarvis-medizindb-backups
+  jarvis-temporarydb-data:
+    name: jarvis-temporarydb-data
+  jarvis-vectordb-data:
+    name: jarvis-vectordb-data
+  jarvis-vectordb-embeddings:
+    name: jarvis-vectordb-embeddings
+  jarvis-vectordb-backups:
+    name: jarvis-vectordb-backups
+  jarvis-tradingdb-data:
+    name: jarvis-tradingdb-data
+  jarvis-tradingdb-backups:
+    name: jarvis-tradingdb-backups
+  
+  # Supporting Services
+  jarvis-redis-data:
+    name: jarvis-redis-data
+  jarvis-nginx-logs:
+    name: jarvis-nginx-logs
+  
+  # Android Emulator Data
+  jarvis-android-data:
+    name: jarvis-android-data
+  jarvis-android-screenshots:
+    name: jarvis-android-screenshots
+  jarvis-android-videos:
+    name: jarvis-android-videos
+  jarvis-android-logs:
+    name: jarvis-android-logs
+  jarvis-android-apks:
+    name: jarvis-android-apks
+  jarvis-android-results:
+    name: jarvis-android-results
+  jarvis-android-backup:
+    name: jarvis-android-backup
+
+# ===========================================
+# Secrets
+# ===========================================
+secrets:
+  onepassword_token:
+    file: ./secrets/onepassword_token.txt
+  claude_code_api_key:
+    file: ./secrets/claude_code_api_key.txt
+  postgres_persons_password:
+    file: ./secrets/postgres_persons_password.txt
+  postgres_org_password:
+    file: ./secrets/postgres_org_password.txt
+  postgres_medical_password:
+    file: ./secrets/postgres_medical_password.txt
+  postgres_trading_password:
+    file: ./secrets/postgres_trading_password.txt
+  medical_encryption_key:
+    file: ./secrets/medical_encryption_key.txt
+  bitpanda_api_key:
+    file: ./secrets/bitpanda_api_key.txt
+  alpha_vantage_api_key:
+    file: ./secrets/alpha_vantage_api_key.txt
+  google_credentials:
+    file: ./secrets/google_credentials.json
+  outlook_client_id:
+    file: ./secrets/outlook_client_id.txt
+  outlook_client_secret:
+    file: ./secrets/outlook_client_secret.txt
+  github_token:
+    file: ./secrets/github_token.txt

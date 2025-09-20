@@ -1,0 +1,72 @@
+# VectorDB - AI Vector Database for Semantic Search & ML
+FROM chromadb/chroma:latest AS base
+
+# Switch to root for installations
+USER root
+
+# Install additional dependencies for AI processing
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install enhanced vector processing libraries
+RUN pip install --no-cache-dir --break-system-packages \
+    sentence-transformers \
+    langchain \
+    openai \
+    anthropic \
+    faiss-cpu \
+    numpy \
+    pandas \
+    scikit-learn
+
+# Copy custom Chroma configuration
+COPY database/vectordb/chroma.conf /opt/chroma/
+COPY database/vectordb/init/ /opt/init/
+COPY database/vectordb/embeddings/ /opt/embeddings/
+
+# Create directories for vector data
+RUN mkdir -p /opt/chroma/data /opt/chroma/embeddings /opt/chroma/backups
+
+# Copy backup and maintenance scripts
+COPY database/vectordb/backup-vectors.py /usr/local/bin/
+COPY database/vectordb/reindex-vectors.py /usr/local/bin/
+COPY database/vectordb/cleanup-old-embeddings.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/backup-vectors.py && \
+    chmod +x /usr/local/bin/reindex-vectors.py && \
+    chmod +x /usr/local/bin/cleanup-old-embeddings.py
+
+# Set up automated maintenance
+RUN mkdir -p /etc/cron.d && \
+    echo "0 4 * * * /usr/local/bin/backup-vectors.py" > /etc/cron.d/vector-backup && \
+    echo "0 5 * * 0 /usr/local/bin/reindex-vectors.py" > /etc/cron.d/vector-reindex
+
+# Create non-root user for Chroma
+RUN useradd -m -u 1000 chroma && \
+    chown -R chroma:chroma /opt/chroma
+USER chroma
+
+# Environment variables for AI/Vector operations
+ENV CHROMA_HOST=0.0.0.0
+ENV CHROMA_PORT=8000
+ENV CHROMA_DATA_PATH=/opt/chroma/data
+ENV EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+ENV MAX_COLLECTION_SIZE=1000000
+ENV VECTOR_DIMENSION=384
+
+# Health check for vector database
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/heartbeat || exit 1
+
+EXPOSE 8000
+
+# Custom entrypoint for vector database
+COPY database/vectordb/docker-entrypoint.sh /usr/local/bin/
+USER root
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER chroma
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["chroma", "run", "--host", "0.0.0.0", "--port", "8000", "--path", "/opt/chroma/data"]

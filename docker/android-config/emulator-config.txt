@@ -1,0 +1,85 @@
+# JARVIS Android Emulator Configuration
+# This file contains configuration parameters for the Android emulator
+# Used by the JARVIS Android automation system
+
+# Emulator startup parameters
+EMULATOR_TIMEOUT=300
+EMULATOR_BOOT_TIMEOUT=120
+EMULATOR_WAIT_TIME=30
+
+# Device specifications
+ANDROID_ARCH=x86_64
+ANDROID_API_LEVEL=33
+ANDROID_TARGET=google_apis_playstore
+DEVICE_NAME=Samsung Galaxy S10
+
+# Display configuration
+DISPLAY_DENSITY=440
+DISPLAY_WIDTH=1440
+DISPLAY_HEIGHT=3040
+DISPLAY_ORIENTATION=portrait
+
+# Performance settings
+MEMORY_SIZE=4096
+CPU_CORES=4
+GPU_MODE=host
+GRAPHICS_ACCELERATION=on
+
+# Network configuration
+NETWORK_SPEED=full
+NETWORK_LATENCY=none
+DNS_SERVER=8.8.8.8
+
+# VNC configuration
+VNC_PORT=6080
+VNC_PASSWORD=jarvis123
+VNC_DEPTH=24
+VNC_GEOMETRY=1440x3040
+
+# Appium configuration
+APPIUM_HOST=0.0.0.0
+APPIUM_PORT=4723
+APPIUM_LOG_LEVEL=info
+APPIUM_TIMEOUT=30000
+
+# Automation settings
+AUTO_ACCEPT_ALERTS=true
+AUTO_DISMISS_ALERTS=false
+IMPLICIT_WAIT=10
+EXPLICIT_WAIT=30
+PAGE_LOAD_TIMEOUT=30
+
+# Recording and screenshots
+ENABLE_RECORDING=true
+SCREENSHOT_ON_FAILURE=true
+VIDEO_RECORDING=true
+RECORDING_QUALITY=medium
+
+# Debug settings
+DEBUG_MODE=false
+VERBOSE_LOGGING=false
+LOG_LEVEL=INFO
+
+# File paths
+SCREENSHOTS_DIR=/app/screenshots
+VIDEOS_DIR=/app/videos
+LOGS_DIR=/app/logs
+APKS_DIR=/app/apks
+TEST_RESULTS_DIR=/app/test-results
+
+# Health check settings
+HEALTH_CHECK_INTERVAL=60
+HEALTH_CHECK_TIMEOUT=30
+HEALTH_CHECK_START_PERIOD=120
+HEALTH_CHECK_RETRIES=3
+
+# Resource limits
+MAX_MEMORY_USAGE=8192
+MAX_CPU_USAGE=4.0
+DISK_SPACE_THRESHOLD=1024
+
+# Security settings
+ALLOW_ROOT_ACCESS=false
+ENABLE_ADB_OVER_NETWORK=false
+ADB_PORT=5554
+ADB_CONSOLE_PORT=5555

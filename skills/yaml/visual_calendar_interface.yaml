@@ -1,0 +1,368 @@
+skill_id: visual_calendar_interface
+name: Interactive Visual Calendar Interface
+description: Advanced web-based calendar interface with drag-and-drop editing, real-time synchronization, and intelligent event management across multiple calendar providers
+category: medium
+version: 1.0.0
+dependencies:
+  - fastapi
+  - jinja2
+  - websockets
+  - sqlalchemy
+  - alembic
+  - uvicorn
+  - pydantic
+  - aiofiles
+frontend_dependencies:
+  - fullcalendar
+  - vue.js
+  - axios
+  - moment.js
+  - bootstrap
+  - socket.io-client
+
+api_requirements:
+  calendar_sync_manager:
+    provider: internal
+    skill_reference: calendar_sync_manager
+    integration_method: direct_call
+  contacts_database:
+    provider: internal
+    skill_reference: personal_contacts_database
+    integration_method: direct_call
+  google_maps:
+    provider: google
+    api_key_env_var: GOOGLE_MAPS_API_KEY
+    services: [geocoding, places, directions]
+  weather_api:
+    provider: openweathermap
+    api_key_env_var: OPENWEATHER_API_KEY
+    features: [forecast, current]
+
+inputs:
+  interface_action:
+    type: string
+    required: true
+    allowed_values: [start_server, stop_server, render_calendar, handle_event_edit, bulk_operations, export_view, import_events]
+    description: Calendar interface action to perform
+  view_settings:
+    type: object
+    required: false
+    properties:
+      view_type:
+        type: string
+        enum: [month, week, day, agenda, timeline]
+        default: month
+      date_range:
+        type: object
+      timezone:
+        type: string
+        default: auto_detect
+      theme:
+        type: string
+        enum: [light, dark, auto]
+        default: auto
+      language:
+        type: string
+        default: en
+      first_day_of_week:
+        type: integer
+        min: 0
+        max: 6
+        default: 1
+  calendar_filters:
+    type: object
+    required: false
+    properties:
+      visible_calendars:
+        type: array
+        items:
+          type: string
+      category_filter:
+        type: array
+      attendee_filter:
+        type: array
+      location_filter:
+        type: string
+      priority_filter:
+        type: array
+      show_private_events:
+        type: boolean
+        default: true
+      show_recurring_events:
+        type: boolean
+        default: true
+  event_editing:
+    type: object
+    required: false
+    properties:
+      event_id:
+        type: string
+      modifications:
+        type: object
+      bulk_edit_ids:
+        type: array
+      validation_mode:
+        type: string
+        enum: [strict, permissive]
+        default: strict
+      auto_save:
+        type: boolean
+        default: true
+      conflict_resolution:
+        type: string
+        enum: [prompt, auto_resolve]
+        default: prompt
+  ui_customization:
+    type: object
+    required: false
+    properties:
+      show_weather:
+        type: boolean
+        default: true
+      show_travel_time:
+        type: boolean
+        default: true
+      show_contact_photos:
+        type: boolean
+        default: true
+      compact_view:
+        type: boolean
+        default: false
+      color_coding:
+        type: string
+        enum: [calendar, category, priority]
+        default: calendar
+      custom_css:
+        type: string
+  smart_features:
+    type: object
+    required: false
+    properties:
+      auto_complete_locations:
+        type: boolean
+        default: true
+      suggest_attendees:
+        type: boolean
+        default: true
+      intelligent_scheduling:
+        type: boolean
+        default: true
+      conflict_detection:
+        type: boolean
+        default: true
+      pattern_recognition:
+        type: boolean
+        default: true
+      quick_actions:
+        type: boolean
+        default: true
+  export_settings:
+    type: object
+    required: false
+    properties:
+      format:
+        type: string
+        enum: [ical, csv, pdf, json]
+        default: ical
+      date_range:
+        type: object
+      include_private:
+        type: boolean
+        default: false
+      include_attachments:
+        type: boolean
+        default: true
+      custom_fields:
+        type: array
+
+outputs:
+  interface_status:
+    type: object
+    properties:
+      server_running:
+        type: boolean
+      server_url:
+        type: string
+      port:
+        type: integer
+      active_connections:
+        type: integer
+      uptime:
+        type: number
+      last_sync:
+        type: string
+  calendar_view_data:
+    type: object
+    properties:
+      events:
+        type: array
+      calendar_metadata:
+        type: object
+      view_statistics:
+        type: object
+      user_preferences:
+        type: object
+      available_actions:
+        type: array
+  event_modifications:
+    type: object
+    properties:
+      modified_events:
+        type: array
+      validation_results:
+        type: object
+      sync_status:
+        type: object
+      conflicts_detected:
+        type: array
+      auto_enhancements:
+        type: object
+  user_interactions:
+    type: array
+    items:
+      type: object
+      properties:
+        action_type:
+          type: string
+        timestamp:
+          type: string
+        event_affected:
+          type: string
+        changes_made:
+          type: object
+        user_agent:
+          type: string
+  smart_suggestions:
+    type: object
+    properties:
+      scheduling_suggestions:
+        type: array
+      conflict_warnings:
+        type: array
+      optimization_tips:
+        type: array
+      pattern_insights:
+        type: array
+      productivity_metrics:
+        type: object
+  export_result:
+    type: object
+    properties:
+      export_successful:
+        type: boolean
+      file_path:
+        type: string
+      file_size:
+        type: number
+      events_exported:
+        type: integer
+      export_format:
+        type: string
+
+execution:
+  type: web_application
+  entry_point: run_calendar_interface
+  timeout: 0
+  retry_attempts: 3
+  async_processing: true
+  real_time_updates: true
+
+web_interface:
+  framework: fastapi
+  frontend: vue_js
+  real_time_communication: websockets
+  responsive_design: true
+  pwa_support: true
+  offline_capabilities: true
+
+calendar_rendering:
+  library: fullcalendar
+  view_types: [dayGridMonth, timeGridWeek, timeGridDay, listWeek, timeline]
+  drag_drop: true
+  resize_events: true
+  event_popover: true
+  keyboard_navigation: true
+  touch_gestures: true
+
+event_editing_features:
+  inline_editing: true
+  modal_dialog: true
+  quick_edit: true
+  bulk_operations: [move, delete, category_change, reminder_update]
+  undo_redo: true
+  draft_saving: true
+  template_system: true
+
+jarvis_ai_integration:
+  smart_autocomplete:
+    location_suggestions: true
+    attendee_suggestions: true
+    title_suggestions: true
+    description_generation: true
+  intelligent_scheduling:
+    optimal_time_suggestions: true
+    conflict_avoidance: true
+    travel_time_consideration: true
+    attendee_availability: true
+  context_awareness:
+    related_event_linking: true
+    document_attachment: true
+    contact_integration: true
+    location_enrichment: true
+
+real_time_features:
+  live_updates: true
+  collaborative_editing: true
+  conflict_resolution: true
+  change_notifications: true
+  multi_user_support: false
+
+data_visualization:
+  calendar_heatmap: true
+  time_usage_analytics: true
+  productivity_charts: true
+  pattern_visualization: true
+  workload_distribution: true
+
+accessibility:
+  screen_reader_support: true
+  keyboard_only_navigation: true
+  high_contrast_mode: true
+  font_size_adjustment: true
+  aria_labels: true
+
+performance_optimization:
+  lazy_loading: true
+  virtual_scrolling: true
+  caching_strategy: intelligent
+  compression: true
+  cdn_integration: true
+
+security:
+  csrf_protection: true
+  xss_prevention: true
+  input_sanitization: true
+  secure_headers: true
+  session_management: true
+
+mobile_support:
+  responsive_design: true
+  touch_optimized: true
+  native_app_wrapper: true
+  offline_sync: true
+  push_notifications: true
+
+error_handling:
+  network_disconnection: Cache changes locally and sync when reconnected
+  server_error: Display user-friendly error message and enable retry
+  validation_failure: Highlight invalid fields and provide correction suggestions
+  sync_conflict: Show conflict resolution dialog with merge options
+  browser_compatibility: Graceful degradation for unsupported features
+  data_corruption: Restore from backup and notify user of recovery actions
+
+integration_capabilities:
+  calendar_providers: [google, outlook, exchange, caldav]
+  external_apis: [weather, maps, contacts, documents]
+  webhook_support: true
+  api_endpoints: true
+  plugin_system: true

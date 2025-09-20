@@ -1,0 +1,261 @@
+{
+  "skill_id": "crypto_portfolio_manager",
+  "name": "Advanced Cryptocurrency Portfolio Management",
+  "description": "Manages cryptocurrency portfolios with real-time tracking, AI-driven analysis, risk assessment, and automated trading strategies",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["ccxt", "pandas", "numpy", "scikit-learn", "ta", "web3", "requests", "asyncio"],
+  "api_requirements": {
+    "coinmarketcap_api": {
+      "provider": "coinmarketcap",
+      "api_key_env_var": "CMC_API_KEY",
+      "base_url": "https://pro-api.coinmarketcap.com",
+      "rate_limit": "10000_per_month"
+    },
+    "coingecko_api": {
+      "provider": "coingecko",
+      "api_key_env_var": "COINGECKO_API_KEY",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "rate_limit": "50_per_minute"
+    },
+    "exchange_apis": {
+      "binance": {
+        "api_key_env_var": "BINANCE_API_KEY",
+        "api_secret_env_var": "BINANCE_API_SECRET",
+        "sandbox": true
+      },
+      "coinbase": {
+        "api_key_env_var": "COINBASE_API_KEY",
+        "api_secret_env_var": "COINBASE_API_SECRET",
+        "passphrase_env_var": "COINBASE_PASSPHRASE"
+      },
+      "kraken": {
+        "api_key_env_var": "KRAKEN_API_KEY",
+        "api_secret_env_var": "KRAKEN_API_SECRET"
+      }
+    },
+    "blockchain_apis": {
+      "ethereum": {
+        "rpc_url_env_var": "ETHEREUM_RPC_URL",
+        "api_key_env_var": "INFURA_API_KEY"
+      },
+      "bitcoin": {
+        "rpc_url_env_var": "BITCOIN_RPC_URL"
+      }
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["track_portfolio", "analyze_performance", "rebalance", "set_alerts", "execute_trade", "risk_assessment", "market_analysis", "generate_report"],
+      "description": "Portfolio management action"
+    },
+    "portfolio_config": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "holdings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": {"type": "string"},
+              "amount": {"type": "number"},
+              "exchange": {"type": "string"},
+              "wallet_address": {"type": "string"},
+              "acquisition_price": {"type": "number"},
+              "acquisition_date": {"type": "string"}
+            }
+          }
+        },
+        "target_allocation": {"type": "object"},
+        "risk_tolerance": {"type": "string", "enum": ["conservative", "moderate", "aggressive"]},
+        "investment_strategy": {"type": "string", "enum": ["hodl", "dca", "swing_trading", "arbitrage"]}
+      }
+    },
+    "trading_parameters": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "max_trade_amount": {"type": "number"},
+        "stop_loss_percentage": {"type": "number"},
+        "take_profit_percentage": {"type": "number"},
+        "auto_trading_enabled": {"type": "boolean", "default": false},
+        "preferred_exchanges": {"type": "array"},
+        "slippage_tolerance": {"type": "number", "default": 0.5}
+      }
+    },
+    "analysis_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "time_period": {"type": "string", "default": "30d"},
+        "include_defi": {"type": "boolean", "default": false},
+        "include_nfts": {"type": "boolean", "default": false},
+        "benchmark": {"type": "string", "default": "bitcoin"},
+        "technical_indicators": {"type": "array"},
+        "fundamental_analysis": {"type": "boolean", "default": true}
+      }
+    },
+    "alert_config": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "price_alerts": {"type": "array"},
+        "portfolio_value_threshold": {"type": "number"},
+        "volatility_threshold": {"type": "number"},
+        "news_sentiment_alerts": {"type": "boolean", "default": true},
+        "notification_methods": {"type": "array", "default": ["email"]}
+      }
+    },
+    "reporting_options": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "report_type": {"type": "string", "enum": ["summary", "detailed", "tax_report", "performance"]},
+        "date_range": {"type": "object"},
+        "include_charts": {"type": "boolean", "default": true},
+        "export_format": {"type": "string", "enum": ["pdf", "excel", "json"]}
+      }
+    }
+  },
+  "outputs": {
+    "portfolio_summary": {
+      "type": "object",
+      "properties": {
+        "total_value_usd": {"type": "number"},
+        "total_value_btc": {"type": "number"},
+        "daily_change": {"type": "number"},
+        "daily_change_percentage": {"type": "number"},
+        "total_return": {"type": "number"},
+        "total_return_percentage": {"type": "number"},
+        "holdings": {"type": "array"},
+        "allocation": {"type": "object"}
+      }
+    },
+    "performance_metrics": {
+      "type": "object",
+      "properties": {
+        "sharpe_ratio": {"type": "number"},
+        "max_drawdown": {"type": "number"},
+        "volatility": {"type": "number"},
+        "beta": {"type": "number"},
+        "alpha": {"type": "number"},
+        "roi": {"type": "number"},
+        "win_rate": {"type": "number"}
+      }
+    },
+    "risk_analysis": {
+      "type": "object",
+      "properties": {
+        "portfolio_risk_score": {"type": "integer", "min": 1, "max": 10},
+        "concentration_risk": {"type": "number"},
+        "correlation_matrix": {"type": "object"},
+        "var_95": {"type": "number"},
+        "var_99": {"type": "number"},
+        "stress_test_results": {"type": "object"}
+      }
+    },
+    "market_insights": {
+      "type": "object",
+      "properties": {
+        "market_sentiment": {"type": "string"},
+        "fear_greed_index": {"type": "integer"},
+        "trending_coins": {"type": "array"},
+        "market_dominance": {"type": "object"},
+        "news_sentiment": {"type": "object"}
+      }
+    },
+    "trade_recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {"type": "string", "enum": ["buy", "sell", "hold"]},
+          "symbol": {"type": "string"},
+          "confidence": {"type": "number"},
+          "reasoning": {"type": "string"},
+          "target_price": {"type": "number"},
+          "time_horizon": {"type": "string"}
+        }
+      }
+    },
+    "rebalancing_plan": {
+      "type": "object",
+      "properties": {
+        "required": {"type": "boolean"},
+        "target_changes": {"type": "array"},
+        "estimated_cost": {"type": "number"},
+        "execution_steps": {"type": "array"}
+      }
+    },
+    "alerts_triggered": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "alert_type": {"type": "string"},
+          "symbol": {"type": "string"},
+          "message": {"type": "string"},
+          "severity": {"type": "string"},
+          "timestamp": {"type": "string"}
+        }
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "manage_crypto_portfolio",
+    "timeout": 240,
+    "retry_attempts": 3,
+    "async_processing": true,
+    "real_time_updates": true
+  },
+  "trading_features": {
+    "order_types": ["market", "limit", "stop_loss", "take_profit", "trailing_stop"],
+    "execution_algorithms": ["twap", "vwap", "iceberg"],
+    "multi_exchange_support": true,
+    "arbitrage_detection": true,
+    "smart_routing": true
+  },
+  "risk_management": {
+    "position_sizing": true,
+    "portfolio_optimization": true,
+    "stress_testing": true,
+    "scenario_analysis": true,
+    "correlation_analysis": true
+  },
+  "ai_features": {
+    "price_prediction": true,
+    "sentiment_analysis": true,
+    "pattern_recognition": true,
+    "anomaly_detection": true,
+    "portfolio_optimization": true
+  },
+  "data_sources": {
+    "price_feeds": ["coinmarketcap", "coingecko", "exchange_apis"],
+    "news_sources": ["cryptonews", "coindesk", "cointelegraph"],
+    "social_sentiment": ["twitter", "reddit", "telegram"],
+    "on_chain_data": ["etherscan", "btc.com", "blockchain.info"]
+  },
+  "security": {
+    "api_key_encryption": true,
+    "read_only_mode": true,
+    "transaction_limits": true,
+    "audit_logging": true,
+    "secure_key_storage": true
+  },
+  "compliance": {
+    "kyc_integration": true,
+    "tax_reporting": true,
+    "regulatory_compliance": true,
+    "transaction_reporting": true
+  },
+  "error_handling": {
+    "exchange_downtime": "Switch to backup data sources and defer trading",
+    "api_rate_limit": "Implement intelligent request throttling",
+    "network_congestion": "Adjust gas fees and retry with optimal timing",
+    "price_feed_error": "Use multiple data sources for validation"
+  }
+}

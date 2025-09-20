@@ -1,0 +1,116 @@
+skill_id: stock_analyzer
+name: Advanced Stock Market Analysis
+description: Analyzes stock market data to find stocks with specific criteria like biggest decline in 24h among top market cap companies
+category: medium
+version: 1.0.0
+dependencies:
+  - requests
+  - pandas
+  - numpy
+  - yfinance
+  - datetime
+
+api_requirements:
+  stock_api:
+    provider: alpha_vantage
+    api_key_env_var: ALPHA_VANTAGE_API_KEY
+    backup_provider: yahoo_finance
+    rate_limit: 5_per_minute
+
+inputs:
+  analysis_type:
+    type: string
+    required: true
+    allowed_values: [biggest_decline_top_market_cap, volume_spike, price_breakout, custom_criteria]
+    description: Type of stock analysis to perform
+  time_period:
+    type: string
+    required: false
+    default: 24h
+    allowed_values: [1h, 24h, 7d, 30d]
+    description: Time period for analysis
+  market_cap_filter:
+    type: object
+    required: false
+    properties:
+      min_market_cap:
+        type: number
+        default: 1000000000
+      top_n_companies:
+        type: integer
+        default: 100
+  custom_criteria:
+    type: object
+    required: false
+    properties:
+      price_change_min:
+        type: number
+      volume_change_min:
+        type: number
+      sectors:
+        type: array
+        items:
+          type: string
+
+outputs:
+  matching_stocks:
+    type: array
+    description: List of stocks matching criteria
+    items:
+      type: object
+      properties:
+        symbol:
+          type: string
+        company_name:
+          type: string
+        current_price:
+          type: number
+        price_change:
+          type: number
+        price_change_percent:
+          type: number
+        volume:
+          type: number
+        market_cap:
+          type: number
+        sector:
+          type: string
+  analysis_summary:
+    type: object
+    properties:
+      total_stocks_analyzed:
+        type: integer
+      criteria_matches:
+        type: integer
+      analysis_timestamp:
+        type: string
+  recommendations:
+    type: array
+    description: AI-generated investment insights
+    items:
+      type: string
+
+execution:
+  type: python_function
+  entry_point: analyze_stocks
+  timeout: 120
+  retry_attempts: 2
+  parallel_processing: true
+
+data_processing:
+  cache_duration: 15_minutes
+  batch_size: 50
+  data_validation:
+    price_range_check: true
+    volume_anomaly_detection: true
+    market_cap_verification: true
+
+risk_assessment:
+  volatility_analysis: true
+  beta_calculation: true
+  risk_scoring: 1_to_10_scale
+
+compliance:
+  disclaimer_required: true
+  no_financial_advice: true
+  data_source_attribution: true

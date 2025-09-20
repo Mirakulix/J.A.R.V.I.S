@@ -1,0 +1,52 @@
+# PersonenDB - Specialized Contact Database
+FROM postgres:15-alpine
+
+# Install additional extensions
+RUN apk add --no-cache \
+    postgresql-contrib \
+    postgresql-dev \
+    python3 \
+    py3-pip \
+    curl
+
+# Install Python for database management scripts
+RUN pip3 install --no-cache-dir --break-system-packages \
+    psycopg2-binary \
+    alembic \
+    sqlalchemy
+
+# Copy database initialization scripts
+COPY database/personendb/init/ /docker-entrypoint-initdb.d/
+COPY database/personendb/migrations/ /opt/migrations/
+COPY database/personendb/backup/ /opt/backup/
+
+# Copy custom configuration
+COPY database/personendb/postgresql.conf /etc/postgresql/postgresql.conf
+COPY database/personendb/pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Create backup script
+COPY database/personendb/backup-script.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/backup-script.sh
+
+# Set up automated backups (keep last 3)
+RUN mkdir -p /etc/cron.d && \
+    echo "0 2 * * * /usr/local/bin/backup-script.sh" > /etc/cron.d/postgres-backup
+
+# Environment variables
+ENV POSTGRES_DB=personendb
+ENV POSTGRES_USER=jarvis_persons
+ENV POSTGRES_PASSWORD_FILE=/run/secrets/postgres_persons_password
+ENV PGDATA=/var/lib/postgresql/data/personendb
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB || exit 1
+
+EXPOSE 5432
+
+# Custom entrypoint for backups and maintenance
+COPY database/personendb/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]

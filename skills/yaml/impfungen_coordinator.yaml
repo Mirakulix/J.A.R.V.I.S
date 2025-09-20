@@ -1,0 +1,412 @@
+skill_id: impfungen_coordinator
+name: AI-Powered Vaccination Coordinator & Health Management
+description: Comprehensive vaccination management system with digital vaccination passport, AI-powered next vaccination recommendations, travel vaccination analysis, and automated reminder scheduling
+category: medium
+version: 1.0.0
+dependencies:
+  - requests
+  - beautifulsoup4
+  - pandas
+  - datetime
+  - icalendar
+  - openai
+  - googletrans
+
+api_requirements:
+  openai_api:
+    provider: openai
+    api_key_env_var: OPENAI_API_KEY
+    model: gpt-4
+    medical_knowledge: true
+  google_calendar:
+    provider: google
+    credentials_file: google_calendar_credentials.json
+    skill_reference: calendar_sync_manager
+  medical_databases:
+    who_vaccine_info:
+      base_url: https://www.who.int/teams/immunization-vaccines-and-biologicals
+    rki_germany:
+      base_url: https://www.rki.de/DE/Content/Kommissionen/STIKO/stiko_node.html
+    austria_health:
+      base_url: https://www.sozialministerium.at/Themen/Gesundheit/Impfen.html
+    cdc_travel:
+      base_url: https://wwwnc.cdc.gov/travel/destinations/list
+  price_comparison:
+    pharmacy_apis: [zur_rose, shop_apotheke, medikamente_per_klick]
+    medical_centers: [health_centers_austria, travel_clinics]
+  email_service:
+    provider: internal
+    skill_reference: email_handler
+
+inputs:
+  action:
+    type: string
+    required: true
+    allowed_values: [add_vaccination, check_recommendations, travel_analysis, schedule_reminders, price_research, validate_vaccine, generate_report, update_passport]
+    description: Vaccination management action to perform
+  vaccination_entry:
+    type: object
+    required: false
+    properties:
+      person_id:
+        type: string
+        description: Reference to personal contacts database
+      vaccine_name:
+        type: string
+        required: true
+      vaccine_manufacturer:
+        type: string
+      vaccination_date:
+        type: string
+        format: date
+        required: true
+      lot_number:
+        type: string
+      administering_doctor:
+        type: string
+      clinic_location:
+        type: string
+      dose_number:
+        type: integer
+        description: 1st, 2nd, 3rd dose, etc.
+      vaccination_site:
+        type: string
+        enum: [left_arm, right_arm, thigh, other]
+      side_effects:
+        type: array
+        items:
+          type: string
+      certificate_number:
+        type: string
+      digital_certificate:
+        type: string
+        description: QR code or digital certificate data
+  travel_destination:
+    type: object
+    required: false
+    properties:
+      country:
+        type: string
+        required: true
+      region:
+        type: string
+      travel_date:
+        type: string
+        format: date
+      travel_duration:
+        type: integer
+        description: Days
+      travel_purpose:
+        type: string
+        enum: [tourism, business, study, work, volunteer]
+      accommodation_type:
+        type: string
+        enum: [hotel, hostel, camping, local_family, other]
+      planned_activities:
+        type: array
+        items:
+          type: string
+  recommendation_settings:
+    type: object
+    required: false
+    properties:
+      reminder_advance_months:
+        type: integer
+        default: 6
+        description: Months before expiry to send reminder
+      include_travel_vaccines:
+        type: boolean
+        default: true
+      include_seasonal_vaccines:
+        type: boolean
+        default: true
+      age_based_recommendations:
+        type: boolean
+        default: true
+      risk_group_assessment:
+        type: boolean
+        default: true
+      country_specific_requirements:
+        type: boolean
+        default: true
+  price_research_config:
+    type: object
+    required: false
+    properties:
+      include_pharmacies:
+        type: boolean
+        default: true
+      include_medical_centers:
+        type: boolean
+        default: true
+      include_travel_clinics:
+        type: boolean
+        default: true
+      search_radius_km:
+        type: integer
+        default: 50
+      location:
+        type: string
+        description: Search center location
+      insurance_coverage:
+        type: boolean
+        default: false
+  notification_preferences:
+    type: object
+    required: false
+    properties:
+      email_reminders:
+        type: boolean
+        default: true
+      calendar_events:
+        type: boolean
+        default: true
+      advance_notice_days:
+        type: array
+        default: [180, 90, 30, 7]
+      include_appointment_booking:
+        type: boolean
+        default: false
+      emergency_contact:
+        type: string
+
+outputs:
+  vaccination_record:
+    type: object
+    properties:
+      record_id:
+        type: string
+      person_id:
+        type: string
+      vaccination_validated:
+        type: boolean
+      vaccine_details:
+        type: object
+      protection_status:
+        type: object
+      next_dose_due:
+        type: string
+        format: date
+      immunity_expiry:
+        type: string
+        format: date
+      certificate_valid:
+        type: boolean
+  vaccination_recommendations:
+    type: array
+    items:
+      type: object
+      properties:
+        vaccine_name:
+          type: string
+        recommendation_type:
+          type: string
+          enum: [booster, initial_series, travel_required, seasonal, age_based]
+        urgency:
+          type: string
+          enum: [immediate, within_month, within_3months, within_6months, routine]
+        due_date:
+          type: string
+          format: date
+        reasoning:
+          type: string
+        cost_estimate:
+          type: number
+        availability:
+          type: string
+  travel_vaccination_analysis:
+    type: object
+    properties:
+      destination_requirements:
+        type: array
+      recommended_vaccines:
+        type: array
+      current_protection:
+        type: array
+      missing_vaccines:
+        type: array
+      total_cost_estimates:
+        type: object
+      timeline_requirements:
+        type: object
+      booking_recommendations:
+        type: array
+  price_comparison:
+    type: object
+    properties:
+      vaccine_prices:
+        type: array
+      provider_comparison:
+        type: array
+      total_cost_breakdown:
+        type: object
+      insurance_coverage:
+        type: object
+      cheapest_option:
+        type: object
+      recommended_provider:
+        type: object
+  vaccination_passport:
+    type: object
+    properties:
+      digital_passport:
+        type: object
+      vaccination_history:
+        type: array
+      current_immunizations:
+        type: array
+      expiring_immunizations:
+        type: array
+      travel_certificates:
+        type: array
+      qr_codes:
+        type: array
+  reminder_schedule:
+    type: array
+    items:
+      type: object
+      properties:
+        reminder_date:
+          type: string
+          format: date
+        vaccination_due:
+          type: string
+        reminder_type:
+          type: string
+        calendar_event_id:
+          type: string
+        email_scheduled:
+          type: boolean
+  available_vaccines:
+    type: object
+    properties:
+      worldwide_vaccines:
+        type: array
+      austria_available:
+        type: array
+      seasonal_vaccines:
+        type: array
+      travel_vaccines:
+        type: array
+      new_vaccines:
+        type: array
+      discontinued_vaccines:
+        type: array
+
+execution:
+  type: python_function
+  entry_point: manage_vaccinations
+  timeout: 180
+  retry_attempts: 3
+  async_processing: true
+  medical_data_handling: true
+
+medical_knowledge_base:
+  vaccine_database:
+    comprehensive_vaccine_list: true
+    manufacturer_details: true
+    dosage_schedules: true
+    contraindications: true
+    side_effects: true
+    efficacy_data: true
+  immunization_schedules:
+    austria_schedule: true
+    who_recommendations: true
+    age_specific_schedules: true
+    risk_group_schedules: true
+    travel_schedules: true
+  disease_information:
+    preventable_diseases: true
+    geographic_distribution: true
+    seasonal_patterns: true
+    outbreak_monitoring: true
+
+ai_analysis_features:
+  vaccine_validation:
+    name_verification: true
+    manufacturer_matching: true
+    spelling_correction: true
+    synonym_recognition: true
+  recommendation_engine:
+    personalized_recommendations: true
+    risk_assessment: true
+    schedule_optimization: true
+    cost_benefit_analysis: true
+  travel_analysis:
+    destination_risk_assessment: true
+    vaccine_requirements: true
+    optimal_timing: true
+    multi_destination_planning: true
+
+data_sources:
+  official_sources:
+    - WHO Immunization Database
+    - Austrian Ministry of Health
+    - RKI Germany STIKO
+    - CDC Travel Health
+    - European Medicines Agency
+  medical_literature:
+    - PubMed
+    - Cochrane Library
+    - Medical Guidelines
+  price_sources:
+    - Austrian Pharmacies
+    - Medical Centers
+    - Travel Clinics
+    - Insurance Databases
+
+compliance_privacy:
+  medical_data_protection:
+    gdpr_compliance: true
+    medical_confidentiality: true
+    data_encryption: true
+    access_logging: true
+  vaccination_certificates:
+    digital_signature_verification: true
+    qr_code_validation: true
+    international_compatibility: true
+    fraud_detection: true
+
+automation_features:
+  calendar_integration:
+    automatic_reminders: true
+    appointment_suggestions: true
+    travel_timeline_optimization: true
+    conflict_detection: true
+  notification_system:
+    multi_channel_alerts: true
+    escalation_procedures: true
+    family_notifications: true
+    doctor_notifications: true
+
+quality_assurance:
+  data_validation:
+    vaccine_name_verification: true
+    date_validation: true
+    dosage_verification: true
+    interaction_checking: true
+  recommendation_validation:
+    medical_guideline_compliance: true
+    contraindication_checking: true
+    age_appropriateness: true
+    pregnancy_safety: true
+
+error_handling:
+  vaccine_not_found: Use AI fuzzy matching and suggest similar vaccines with verification
+  conflicting_recommendations: Present multiple options with medical reasoning and risk assessment
+  data_source_unavailable: Use cached data and alternative sources with confidence indicators
+  travel_info_outdated: Fetch latest travel advisories and vaccination requirements
+  price_data_stale: Use historical pricing trends and mark data age
+  reminder_delivery_failed: Retry through alternative channels and log failures
+
+integration_capabilities:
+  healthcare_systems:
+    electronic_health_records: false
+    pharmacy_systems: true
+    insurance_systems: true
+    appointment_booking: true
+  government_systems:
+    vaccination_registries: false
+    travel_advisories: true
+    health_alerts: true
+    certificate_validation: true

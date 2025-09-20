@@ -1,0 +1,451 @@
+{
+  "skill_id": "personal_contacts_database",
+  "name": "Comprehensive Personal Contacts Database Manager",
+  "description": "Advanced contact management system with comprehensive personal information storage, relationship mapping, automated backups, and intelligent data enrichment from multiple sources",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["sqlalchemy", "alembic", "pydantic", "pillow", "face_recognition", "phonenumbers", "pycountry", "geopy", "apscheduler"],
+  "api_requirements": {
+    "google_contacts": {
+      "provider": "google",
+      "credentials_file": "google_contacts_credentials.json",
+      "scopes": ["https://www.googleapis.com/auth/contacts"],
+      "sync_enabled": true
+    },
+    "outlook_contacts": {
+      "provider": "microsoft",
+      "client_id_env_var": "OUTLOOK_CLIENT_ID",
+      "client_secret_env_var": "OUTLOOK_CLIENT_SECRET",
+      "scopes": ["https://graph.microsoft.com/contacts.readwrite"],
+      "sync_enabled": true
+    },
+    "linkedin_api": {
+      "provider": "linkedin",
+      "api_key_env_var": "LINKEDIN_API_KEY",
+      "api_secret_env_var": "LINKEDIN_API_SECRET",
+      "enrichment_enabled": true
+    },
+    "social_media_apis": {
+      "facebook": {"api_key_env_var": "FACEBOOK_API_KEY"},
+      "twitter": {"api_key_env_var": "TWITTER_API_KEY"},
+      "instagram": {"api_key_env_var": "INSTAGRAM_API_KEY"}
+    },
+    "data_enrichment": {
+      "clearbit": {"api_key_env_var": "CLEARBIT_API_KEY"},
+      "pipl": {"api_key_env_var": "PIPL_API_KEY"},
+      "hunter_io": {"api_key_env_var": "HUNTER_IO_API_KEY"}
+    },
+    "backup_storage": {
+      "google_drive": {"credentials_file": "google_drive_credentials.json"},
+      "dropbox": {"api_key_env_var": "DROPBOX_API_KEY"},
+      "aws_s3": {"bucket_env_var": "AWS_S3_BUCKET"}
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["create_contact", "update_contact", "delete_contact", "search_contacts", "merge_duplicates", "sync_sources", "backup_database", "restore_backup", "enrich_data", "generate_report"],
+      "description": "Contact database action to perform"
+    },
+    "contact_data": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "personal_info": {
+          "type": "object",
+          "properties": {
+            "profile_photo": {"type": "string", "description": "Base64 encoded image or file path"},
+            "first_name": {"type": "string", "required": true},
+            "last_name": {"type": "string", "required": true},
+            "middle_name": {"type": "string"},
+            "nickname": {"type": "string"},
+            "academic_title": {"type": "string"},
+            "suffix": {"type": "string"},
+            "preferred_name": {"type": "string"},
+            "pronunciation": {"type": "string"},
+            "gender": {"type": "string", "enum": ["male", "female", "other", "prefer_not_to_say"]},
+            "birth_date": {"type": "string", "format": "date"},
+            "age": {"type": "integer", "computed": true}
+          }
+        },
+        "contact_information": {
+          "type": "object",
+          "properties": {
+            "phone_numbers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "number": {"type": "string", "required": true},
+                  "type": {"type": "string", "enum": ["mobile", "home", "work", "fax", "other"]},
+                  "primary": {"type": "boolean", "default": false},
+                  "country_code": {"type": "string"},
+                  "verified": {"type": "boolean", "default": false}
+                }
+              }
+            },
+            "email_addresses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "email": {"type": "string", "format": "email", "required": true},
+                  "type": {"type": "string", "enum": ["personal", "work", "other"]},
+                  "primary": {"type": "boolean", "default": false},
+                  "verified": {"type": "boolean", "default": false}
+                }
+              }
+            },
+            "addresses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "street_address": {"type": "string"},
+                  "house_number": {"type": "string"},
+                  "city": {"type": "string"},
+                  "postal_code": {"type": "string"},
+                  "region_state": {"type": "string"},
+                  "country": {"type": "string"},
+                  "country_code": {"type": "string"},
+                  "type": {"type": "string", "enum": ["home", "work", "other"]},
+                  "coordinates": {"type": "object", "properties": {"lat": {"type": "number"}, "lng": {"type": "number"}}},
+                  "primary": {"type": "boolean", "default": false}
+                }
+              }
+            },
+            "websites": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {"type": "string", "format": "uri"},
+                  "type": {"type": "string", "enum": ["personal", "work", "portfolio", "blog", "other"]},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "social_media": {
+          "type": "object",
+          "properties": {
+            "linkedin": {"type": "string"},
+            "twitter": {"type": "string"},
+            "facebook": {"type": "string"},
+            "instagram": {"type": "string"},
+            "youtube": {"type": "string"},
+            "tiktok": {"type": "string"},
+            "github": {"type": "string"},
+            "other_platforms": {"type": "array"}
+          }
+        },
+        "professional_info": {
+          "type": "object",
+          "properties": {
+            "job_title": {"type": "string"},
+            "company": {"type": "string"},
+            "department": {"type": "string"},
+            "industry": {"type": "string"},
+            "work_location": {"type": "string"},
+            "salary_range": {"type": "string"},
+            "employment_status": {"type": "string", "enum": ["employed", "unemployed", "self_employed", "retired", "student"]},
+            "career_level": {"type": "string", "enum": ["entry", "mid", "senior", "executive", "c_level"]},
+            "skills": {"type": "array", "items": {"type": "string"}},
+            "certifications": {"type": "array"},
+            "education": {"type": "array"}
+          }
+        },
+        "personal_relationships": {
+          "type": "object",
+          "properties": {
+            "relationship_to_me": {"type": "string", "enum": ["family", "friend", "colleague", "business", "acquaintance", "other"]},
+            "relationship_status": {"type": "string", "enum": ["single", "married", "divorced", "widowed", "in_relationship", "unknown"]},
+            "partner_id": {"type": "string", "description": "Reference to partner's contact ID"},
+            "children": {"type": "array", "items": {"type": "string"}, "description": "Array of contact IDs for children"},
+            "parents": {"type": "array", "items": {"type": "string"}},
+            "siblings": {"type": "array", "items": {"type": "string"}},
+            "friend_circle": {"type": "string"},
+            "how_we_met": {"type": "string"},
+            "relationship_duration": {"type": "string"},
+            "closeness_level": {"type": "integer", "min": 1, "max": 10}
+          }
+        },
+        "interaction_history": {
+          "type": "object",
+          "properties": {
+            "last_contact": {"type": "string", "format": "datetime"},
+            "last_meeting": {"type": "string", "format": "datetime"},
+            "contact_frequency": {"type": "string", "enum": ["daily", "weekly", "monthly", "quarterly", "yearly", "rarely"]},
+            "preferred_communication": {"type": "string", "enum": ["email", "phone", "text", "social_media", "in_person"]},
+            "communication_notes": {"type": "string"},
+            "meeting_locations": {"type": "array"},
+            "important_dates": {"type": "array"}
+          }
+        },
+        "preferences_notes": {
+          "type": "object",
+          "properties": {
+            "interests": {"type": "array", "items": {"type": "string"}},
+            "hobbies": {"type": "array", "items": {"type": "string"}},
+            "favorite_restaurants": {"type": "array"},
+            "dietary_restrictions": {"type": "array"},
+            "languages_spoken": {"type": "array"},
+            "timezone": {"type": "string"},
+            "personality_traits": {"type": "array"},
+            "notes": {"type": "string"},
+            "tags": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "search_criteria": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "query": {"type": "string"},
+        "filters": {"type": "object"},
+        "sort_by": {"type": "string", "enum": ["name", "last_contact", "relationship", "company"]},
+        "limit": {"type": "integer", "default": 50},
+        "include_inactive": {"type": "boolean", "default": false}
+      }
+    },
+    "sync_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "sources": {"type": "array", "items": {"type": "string"}},
+        "conflict_resolution": {"type": "string", "enum": ["manual", "most_recent", "most_complete"], "default": "most_recent"},
+        "auto_merge_threshold": {"type": "number", "default": 0.85},
+        "preserve_manual_entries": {"type": "boolean", "default": true}
+      }
+    },
+    "backup_config": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "backup_destination": {"type": "string", "enum": ["local", "google_drive", "dropbox", "aws_s3"], "default": "local"},
+        "encryption_enabled": {"type": "boolean", "default": true},
+        "compression": {"type": "boolean", "default": true},
+        "include_photos": {"type": "boolean", "default": true},
+        "retention_count": {"type": "integer", "default": 3}
+      }
+    },
+    "enrichment_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "auto_enrich": {"type": "boolean", "default": true},
+        "social_media_lookup": {"type": "boolean", "default": true},
+        "professional_info_lookup": {"type": "boolean", "default": true},
+        "photo_enhancement": {"type": "boolean", "default": true},
+        "duplicate_detection": {"type": "boolean", "default": true}
+      }
+    }
+  },
+  "outputs": {
+    "operation_result": {
+      "type": "object",
+      "properties": {
+        "success": {"type": "boolean"},
+        "contact_id": {"type": "string"},
+        "contacts_affected": {"type": "integer"},
+        "changes_made": {"type": "array"},
+        "warnings": {"type": "array"},
+        "errors": {"type": "array"}
+      }
+    },
+    "contact_details": {
+      "type": "object",
+      "properties": {
+        "contact_id": {"type": "string"},
+        "complete_profile": {"type": "object"},
+        "enrichment_status": {"type": "object"},
+        "data_sources": {"type": "array"},
+        "last_updated": {"type": "string"},
+        "data_completeness": {"type": "number"}
+      }
+    },
+    "search_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contact_id": {"type": "string"},
+          "display_name": {"type": "string"},
+          "summary": {"type": "string"},
+          "match_score": {"type": "number"},
+          "last_contact": {"type": "string"},
+          "relationship": {"type": "string"},
+          "thumbnail": {"type": "string"}
+        }
+      }
+    },
+    "duplicate_analysis": {
+      "type": "object",
+      "properties": {
+        "potential_duplicates": {"type": "array"},
+        "merge_suggestions": {"type": "array"},
+        "confidence_scores": {"type": "object"},
+        "auto_mergeable": {"type": "integer"},
+        "manual_review_required": {"type": "integer"}
+      }
+    },
+    "sync_report": {
+      "type": "object",
+      "properties": {
+        "sources_synced": {"type": "array"},
+        "contacts_imported": {"type": "integer"},
+        "contacts_updated": {"type": "integer"},
+        "conflicts_resolved": {"type": "integer"},
+        "sync_duration": {"type": "number"},
+        "next_sync_scheduled": {"type": "string"}
+      }
+    },
+    "backup_status": {
+      "type": "object",
+      "properties": {
+        "backup_created": {"type": "boolean"},
+        "backup_location": {"type": "string"},
+        "backup_size": {"type": "number"},
+        "contacts_backed_up": {"type": "integer"},
+        "backup_timestamp": {"type": "string"},
+        "retention_cleanup": {"type": "object"}
+      }
+    },
+    "database_statistics": {
+      "type": "object",
+      "properties": {
+        "total_contacts": {"type": "integer"},
+        "contacts_by_relationship": {"type": "object"},
+        "contacts_by_source": {"type": "object"},
+        "data_completeness_avg": {"type": "number"},
+        "last_interaction_distribution": {"type": "object"},
+        "geographic_distribution": {"type": "object"}
+      }
+    },
+    "enrichment_results": {
+      "type": "object",
+      "properties": {
+        "contacts_enriched": {"type": "integer"},
+        "data_points_added": {"type": "integer"},
+        "photos_enhanced": {"type": "integer"},
+        "social_profiles_found": {"type": "integer"},
+        "professional_info_updated": {"type": "integer"}
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "manage_contacts_database",
+    "timeout": 300,
+    "retry_attempts": 2,
+    "async_processing": true,
+    "background_tasks": true
+  },
+  "database_schema": {
+    "engine": "postgresql",
+    "fallback_engine": "sqlite",
+    "migrations": "alembic",
+    "indexing": {
+      "full_text_search": true,
+      "phonetic_search": true,
+      "fuzzy_matching": true,
+      "relationship_indexing": true
+    },
+    "constraints": {
+      "foreign_keys": true,
+      "unique_constraints": true,
+      "check_constraints": true
+    }
+  },
+  "data_enrichment": {
+    "automated_enrichment": {
+      "social_media_scraping": true,
+      "professional_network_lookup": true,
+      "public_records_search": false,
+      "company_directory_lookup": true
+    },
+    "photo_processing": {
+      "face_recognition": true,
+      "duplicate_photo_detection": true,
+      "photo_quality_enhancement": true,
+      "automatic_cropping": true
+    },
+    "data_validation": {
+      "email_verification": true,
+      "phone_number_validation": true,
+      "address_verification": true,
+      "social_media_verification": true
+    }
+  },
+  "privacy_security": {
+    "data_encryption": {
+      "at_rest": true,
+      "in_transit": true,
+      "field_level": true,
+      "photo_encryption": true
+    },
+    "access_control": {
+      "role_based_access": false,
+      "data_masking": true,
+      "audit_logging": true
+    },
+    "compliance": {
+      "gdpr_compliance": true,
+      "right_to_deletion": true,
+      "data_portability": true,
+      "consent_management": true
+    }
+  },
+  "backup_system": {
+    "automated_backups": {
+      "schedule": "daily",
+      "time": "02:00",
+      "retention_policy": "keep_last_3",
+      "compression": true,
+      "encryption": true
+    },
+    "backup_verification": {
+      "integrity_checks": true,
+      "restoration_testing": false,
+      "backup_monitoring": true
+    },
+    "disaster_recovery": {
+      "multiple_locations": true,
+      "incremental_backups": true,
+      "point_in_time_recovery": true
+    }
+  },
+  "integration_features": {
+    "calendar_integration": true,
+    "email_integration": true,
+    "social_media_monitoring": true,
+    "crm_export": true,
+    "api_endpoints": true,
+    "webhook_notifications": true
+  },
+  "analytics_insights": {
+    "relationship_mapping": true,
+    "interaction_patterns": true,
+    "network_analysis": true,
+    "contact_recommendations": true,
+    "relationship_health_scoring": true
+  },
+  "error_handling": {
+    "data_corruption": "Restore from most recent valid backup and log corruption details",
+    "sync_conflicts": "Apply configured resolution strategy and notify user of conflicts",
+    "api_failures": "Cache operations locally and retry with exponential backoff",
+    "storage_full": "Compress old data and notify user to review retention settings",
+    "duplicate_detection_failure": "Log error and continue with manual duplicate review",
+    "enrichment_service_down": "Queue enrichment tasks for later processing"
+  },
+  "performance_optimization": {
+    "database_indexing": true,
+    "query_optimization": true,
+    "connection_pooling": true,
+    "caching_strategy": "intelligent",
+    "lazy_loading": true
+  }
+}

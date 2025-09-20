@@ -1,0 +1,233 @@
+{
+  "skill_id": "social_media_manager",
+  "name": "AI Social Media Management Platform",
+  "description": "Manages social media presence across platforms with AI content generation, scheduling, analytics, and engagement optimization",
+  "category": "medium",
+  "version": "1.0.0",
+  "dependencies": ["tweepy", "facebook-sdk", "instagram-private-api", "linkedin-api", "requests", "PIL", "moviepy", "schedule"],
+  "api_requirements": {
+    "twitter_api": {
+      "provider": "twitter",
+      "api_key_env_var": "TWITTER_API_KEY",
+      "api_secret_env_var": "TWITTER_API_SECRET",
+      "access_token_env_var": "TWITTER_ACCESS_TOKEN",
+      "access_token_secret_env_var": "TWITTER_ACCESS_TOKEN_SECRET",
+      "api_version": "v2"
+    },
+    "facebook_api": {
+      "provider": "meta",
+      "app_id_env_var": "FACEBOOK_APP_ID",
+      "app_secret_env_var": "FACEBOOK_APP_SECRET",
+      "access_token_env_var": "FACEBOOK_ACCESS_TOKEN",
+      "page_id_env_var": "FACEBOOK_PAGE_ID"
+    },
+    "instagram_api": {
+      "provider": "meta",
+      "access_token_env_var": "INSTAGRAM_ACCESS_TOKEN",
+      "business_account_id_env_var": "INSTAGRAM_BUSINESS_ID"
+    },
+    "linkedin_api": {
+      "provider": "linkedin",
+      "client_id_env_var": "LINKEDIN_CLIENT_ID",
+      "client_secret_env_var": "LINKEDIN_CLIENT_SECRET",
+      "access_token_env_var": "LINKEDIN_ACCESS_TOKEN"
+    },
+    "openai_api": {
+      "provider": "openai",
+      "api_key_env_var": "OPENAI_API_KEY",
+      "model": "gpt-4"
+    }
+  },
+  "inputs": {
+    "action": {
+      "type": "string",
+      "required": true,
+      "allowed_values": ["post_content", "schedule_post", "analyze_engagement", "generate_content", "monitor_mentions", "respond_to_comments", "update_profile", "get_analytics"],
+      "description": "Social media management action"
+    },
+    "platforms": {
+      "type": "array",
+      "required": false,
+      "default": ["twitter"],
+      "items": {"type": "string", "enum": ["twitter", "facebook", "instagram", "linkedin", "tiktok"]},
+      "description": "Target social media platforms"
+    },
+    "content": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "text": {"type": "string", "max_length": 280},
+        "images": {"type": "array", "items": {"type": "string"}},
+        "videos": {"type": "array", "items": {"type": "string"}},
+        "links": {"type": "array", "items": {"type": "string"}},
+        "hashtags": {"type": "array", "items": {"type": "string"}},
+        "mentions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "content_generation": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "topic": {"type": "string"},
+        "tone": {"type": "string", "enum": ["professional", "casual", "humorous", "informative", "promotional"]},
+        "target_audience": {"type": "string"},
+        "content_type": {"type": "string", "enum": ["post", "thread", "story", "reel", "carousel"]},
+        "include_cta": {"type": "boolean", "default": false},
+        "brand_voice": {"type": "string"},
+        "keywords": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "scheduling": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "post_time": {"type": "string", "format": "datetime"},
+        "timezone": {"type": "string", "default": "UTC"},
+        "recurring": {"type": "boolean", "default": false},
+        "frequency": {"type": "string", "enum": ["daily", "weekly", "monthly"]},
+        "optimal_timing": {"type": "boolean", "default": true}
+      }
+    },
+    "engagement_settings": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "auto_reply": {"type": "boolean", "default": false},
+        "reply_templates": {"type": "array"},
+        "engagement_rate_target": {"type": "number"},
+        "interaction_types": {"type": "array", "items": {"type": "string", "enum": ["like", "comment", "share", "follow"]}}
+      }
+    },
+    "analytics_period": {
+      "type": "object",
+      "required": false,
+      "properties": {
+        "start_date": {"type": "string", "format": "date"},
+        "end_date": {"type": "string", "format": "date"},
+        "metrics": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "outputs": {
+    "post_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {"type": "string"},
+          "post_id": {"type": "string"},
+          "status": {"type": "string"},
+          "url": {"type": "string"},
+          "scheduled_time": {"type": "string"},
+          "error_message": {"type": "string"}
+        }
+      }
+    },
+    "generated_content": {
+      "type": "object",
+      "properties": {
+        "primary_text": {"type": "string"},
+        "alternative_versions": {"type": "array"},
+        "suggested_hashtags": {"type": "array"},
+        "optimal_post_times": {"type": "array"},
+        "content_score": {"type": "number"}
+      }
+    },
+    "engagement_analytics": {
+      "type": "object",
+      "properties": {
+        "total_likes": {"type": "integer"},
+        "total_comments": {"type": "integer"},
+        "total_shares": {"type": "integer"},
+        "total_impressions": {"type": "integer"},
+        "engagement_rate": {"type": "number"},
+        "top_performing_posts": {"type": "array"},
+        "audience_demographics": {"type": "object"}
+      }
+    },
+    "mention_monitoring": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {"type": "string"},
+          "author": {"type": "string"},
+          "content": {"type": "string"},
+          "sentiment": {"type": "string"},
+          "timestamp": {"type": "string"},
+          "requires_response": {"type": "boolean"}
+        }
+      }
+    },
+    "competitor_analysis": {
+      "type": "object",
+      "properties": {
+        "competitor_performance": {"type": "array"},
+        "trending_hashtags": {"type": "array"},
+        "content_gaps": {"type": "array"},
+        "opportunities": {"type": "array"}
+      }
+    },
+    "content_calendar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {"type": "string"},
+          "platform": {"type": "string"},
+          "content_type": {"type": "string"},
+          "topic": {"type": "string"},
+          "status": {"type": "string"}
+        }
+      }
+    }
+  },
+  "execution": {
+    "type": "python_function",
+    "entry_point": "manage_social_media",
+    "timeout": 180,
+    "retry_attempts": 3,
+    "async_processing": true,
+    "rate_limiting": true
+  },
+  "content_optimization": {
+    "ai_content_generation": true,
+    "sentiment_analysis": true,
+    "trend_analysis": true,
+    "hashtag_optimization": true,
+    "timing_optimization": true,
+    "a_b_testing": true
+  },
+  "engagement_automation": {
+    "auto_like": false,
+    "auto_follow": false,
+    "auto_reply": true,
+    "smart_commenting": true,
+    "mention_alerts": true
+  },
+  "analytics_features": {
+    "real_time_monitoring": true,
+    "competitor_tracking": true,
+    "roi_calculation": true,
+    "audience_insights": true,
+    "performance_forecasting": true
+  },
+  "compliance": {
+    "platform_guidelines": true,
+    "content_moderation": true,
+    "copyright_checking": true,
+    "disclosure_requirements": true
+  },
+  "security": {
+    "token_encryption": true,
+    "api_rate_limiting": true,
+    "content_backup": true,
+    "audit_logging": true
+  },
+  "error_handling": {
+    "api_rate_limit": "Implement exponential backoff and queue management",
+    "post_failure": "Retry with fallback options and notify user",
+    "platform_downtime": "Queue posts for later execution",
+    "content_violation": "Flag content and suggest modifications"
+  }
+}

@@ -1,0 +1,11 @@
+# JARVIS Connector Dependencies
+google-api-python-client==2.108.0
+google-auth-httplib2==0.1.1
+google-auth-oauthlib==1.1.0
+exchangelib==5.0.1
+onepasswordconnectsdk==1.5.0
+requests==2.31.0
+httpx==0.23.3
+pydantic==2.5.0
+python-dotenv==1.0.0
+loguru==0.7.2

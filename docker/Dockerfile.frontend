@@ -1,0 +1,44 @@
+# JarvisFrontEnd - Web Interface & Chat UI
+FROM node:18-alpine AS frontend-build
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install --omit=dev
+
+COPY frontend/ ./
+RUN npm run build && mkdir -p dist && echo '<h1>JARVIS Frontend</h1>' > dist/index.html
+
+# Python backend for Starlette API
+FROM python:3.11-slim AS backend
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements-frontend.txt .
+RUN pip install --no-cache-dir -r requirements-frontend.txt
+
+# Copy frontend build
+COPY --from=frontend-build /app/frontend/dist ./static/
+
+# Copy backend source
+COPY jarvis_frontend/ ./jarvis_frontend/
+COPY shared/ ./shared/
+
+# Create non-root user
+RUN useradd -m -u 1000 jarvis && \
+    chown -R jarvis:jarvis /app
+USER jarvis
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+EXPOSE 8080
+
+CMD ["python", "-m", "jarvis_frontend.main"]
