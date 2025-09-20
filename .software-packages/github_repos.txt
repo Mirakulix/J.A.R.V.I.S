@@ -1,0 +1,11 @@
+git clone git@github.com:Mirakulix/awesome-AI-driven-development.git \
+    && git clone git@github.com:Mirakulix/cursor-ai-prototyping-tool.git \
+    && git clone git@github.com:Mirakulix/base44-site-template.git \
+    && git clone git@github.com:Mirakulix/agenticSeek.git \
+    && git clone git@github.com:Mirakulix/awesome-claude-code-subagents.git \
+    && git clone git@github.com:Mirakulix/casibase-enterprise-rag-system.git \
+    && git clone git@github.com:Mirakulix/crewAI.git \
+    && git clone git@github.com:Mirakulix/cua-Computer-Use-AI-Agents.git \
+    && git clone git@github.com:Mirakulix/refly-ai.git \
+    && git clone git@github.com:Mirakulix/CL4R1T4S.git \
+    && git clone git@github.com:Mirakulix/awesome-ai-system-prompts.git
